@@ -1,0 +1,120 @@
+﻿﻿@using Airline_Ticket_System.Models.Flight
+﻿@using Airline_Ticket_System.Data.Constants
+
+@model IEnumerable<FlightViewModel>
+@{
+    var isAdmin = User.IsInRole("Admin");
+    var isOperator = User.IsInRole("Operator");
+}
+
+@{
+    ViewData["Title"] = "Flights";
+}
+
+
+    <h2>Flights</h2>
+    <form asp-controller="Flight">
+        <p>
+            Departure City: <input type="text" name="SearchDepartureCity" />
+            <input type="submit" value="Filter" asp-action="Index" method="get" />
+            <input type="submit" value="Reset" asp-action="Reset" />
+        </p>
+    </form>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Number</th>
+                <th>Departure City</th>
+                <th>Arrival City</th>
+                <th>Duration</th>
+                <th>Price</th>
+                <th>Capacity</th>
+                <th>Is Full</th>
+
+                @if (isAdmin)
+                {
+                <th>
+                    Actions</th>
+                }
+</tr>
+</thead>
+
+<tbody>
+
+@foreach (var flight in Model)
+    {
+    <tr>
+        <th>@flight.Id</th>
+            <th>@flight.DepartureCity</th>
+            <th>@flight.ArrivalCity</th>
+            <th>@flight.Duration</th>
+            <th>@flight.Price</th>
+                <th>@flight.Capacity</th>
+             @if (!@flight.IsFullyBooked)
+            {
+            <th>not full</th>
+            }
+            else
+            {
+            <th class="full">full</th>
+            }
+
+             @if (User.Identity?.IsAuthenticated ?? false)
+            {
+            <th>
+                        @if (isAdmin || isOperator)
+                        {
+
+                            <a asp-controller="Flight"
+                               asp-action="Details"
+                               asp-route-id="@flight.Id">
+                                Details
+                            </a>
+                        }
+                @if (!@flight.IsFullyBooked)
+                {
+                
+                    <a asp-controller="Booking"
+                       asp-action="Create"
+                       asp-route-id="@flight.Id">
+                        Book Seat
+                    </a>
+    
+                }
+
+                @if (isAdmin && !flight.PassengerViewModels.Any())
+                {
+ 
+                <a asp-controller="Flight"
+                   asp-action="Edit"
+                   asp-route-id="@flight.Id">
+                    Edit
+                </a>
+            
+          
+                <a asp-controller="Flight"
+                   asp-action="Delete"
+                   asp-route-id="@flight.Id">
+                    Delete
+                </a>
+        
+                }
+                
+            </th>
+            }
+    </tr>
+}
+</tbody>
+</table>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

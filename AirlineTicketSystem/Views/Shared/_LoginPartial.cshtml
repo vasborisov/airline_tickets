@@ -1,0 +1,22 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Airline_Ticket_System.Data.Entities
+
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var isUser = User.IsInRole("User");
+}
+
+<ul class="navbar-nav ms-auto">
+    @if (User.Identity.IsAuthenticated)
+    {
+        @if (isUser)
+        {
+            <li class="nav-item">
+                <a class="nav-link" asp-controller="Account" asp-action="EditProfile">Edit Profile</a>
+            </li>
+        }
+        <li class="nav-item">
+            <a class="nav-link" asp-controller="Account" asp-action="Logout">Logout</a>
+        </li>
+    }
+</ul>

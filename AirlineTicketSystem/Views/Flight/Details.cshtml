@@ -1,0 +1,70 @@
+﻿@model Airline_Ticket_System.Models.Flight.FlightViewModel
+
+@{
+    ViewData["Title"] = "Flight Details";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Flight Details</h2>
+
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Departure City</dt>
+                <dd class="col-sm-9">@Model.DepartureCity</dd>
+
+                <dt class="col-sm-3">Arrival City</dt>
+                <dd class="col-sm-9">@Model.ArrivalCity</dd>
+
+                <dt class="col-sm-3">Duration</dt>
+                <dd class="col-sm-9">@Model.Duration minutes</dd>
+
+                <dt class="col-sm-3">Price</dt>
+                <dd class="col-sm-9">@Model.Price.ToString("C", System.Globalization.CultureInfo.CreateSpecificCulture("fr-FR"))</dd>
+
+                <dt class="col-sm-3">Capacity</dt>
+                <dd class="col-sm-9">@Model.Capacity</dd>
+
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">
+                    @if (Model.IsFullyBooked)
+                    {
+                        <span class="badge bg-danger">Fully Booked</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Available</span>
+                    }
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <h3 class="mb-3">Booked Passengers</h3>
+
+    @if (Model.PassengerViewModels != null && Model.PassengerViewModels.Any())
+    {
+        <table class="table table-bordered table-hover shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var passenger in Model.PassengerViewModels)
+                {
+                    <tr>
+                        <td>@passenger.PrintAllName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">No passengers booked for this flight yet.</div>
+    }
+
+    <a class="btn btn-secondary mt-3" asp-controller="Flight" asp-action="Index">Back to Flights</a>
+</div>
+

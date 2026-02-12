@@ -1,0 +1,52 @@
+﻿@using Airline_Ticket_System.Data.Entities
+@using Airline_Ticket_System.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@model IEnumerable<ApplicationUser>
+@{
+    ViewData["Title"] = "Users";
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@if (isAdmin)
+{
+    <div class="container mt-4">
+        <div class="text-center mb-4">
+            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+            <div class="mb-3 text-end">
+                <a class="btn btn-success" asp-area="" asp-controller="Account" asp-action="RegisterOperator">
+                    New Operator
+                </a>
+            </div>
+
+
+            <table class="table table-hover table-striped table-bordered shadow-sm">
+                <thead class="thead-light">
+                    <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Model)
+                    {
+                        var roles = await UserManager.GetRolesAsync(user);
+                        var roleNames = string.Join(", ", roles);
+
+                        <tr>
+                            <td>@($"{user.FirstName} {user.FamilyName}")</td>
+                            <td>@user.Email</td>
+                            <td>@roleNames</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}
+

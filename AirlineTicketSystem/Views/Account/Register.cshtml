@@ -1,0 +1,60 @@
+﻿@using Airline_Ticket_System.Models.Account
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<div class="card mb-4 shadow-sm">
+    <div class="card-header">
+        <h4 class="display-4 text-center text-primary">Registration</h4>
+    </div>
+
+    <div class="row card-body">
+        <div class="col-md-8 offset-md-2">
+            <form method="post">
+                @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+
+                <div class="form-group">
+                    <label asp-for="FirstName" class="control-label" ></label>
+                    <input asp-for="FirstName" class="form-control" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="FamilyName" class="control-label"></label>
+                    <input asp-for="FamilyName" class="form-control" />
+                    <span asp-validation-for="FamilyName" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Email" class="control-label"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group">
+                    <label asp-for="Password" class="control-label"></label>
+                    <input asp-for="Password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword" class="control-label">Confirm Password</label>
+                    <input asp-for="ConfirmPassword" class="form-control" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <div class="card-footer text-center">
+                    <button type="submit" class="btn btn-primary">Sign up</button>
+                    <div>
+                        <p>
+                            You already have an account?
+                            <a class="nav-link" asp-controller="Account" asp-action="Login"><i class="fas"></i>Log in</a>
+                         </p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

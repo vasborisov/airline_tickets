@@ -1,0 +1,58 @@
+﻿@model Airline_Ticket_System.Models.Flight.FlightViewModel
+@{
+    var isAdmin = User.IsInRole("Admin");
+}
+
+@{
+    ViewData["Title"] = "Edit Flight";
+}
+
+@if (isAdmin)
+{
+    <img class="img_deg" src="~/photo/flight_logo.jpg" />
+    <div class="container-form">
+        <h2>Edit Flight</h2>
+
+        <form method="post" asp-controller="Flight" asp-action="Edit" asp-route-id="@Model.Id">
+            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+            <div>
+                <label asp-for="DepartureCity" class="control-label"></label>
+                <input asp-for="DepartureCity" class="form-control" />
+                <span asp-validation-for="DepartureCity" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="ArrivalCity" class="control-label"></label>
+                <input type="text" asp-for="ArrivalCity" class="form-control" />
+                <span asp-validation-for="ArrivalCity" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Duration">Duration</label>
+                <input type="number" asp-for="Duration" class="form-control" />
+                <span asp-validation-for="Duration" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Price"></label>
+                <input asp-for="Price" class="form-control" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Capacity"></label>
+                <input type="number" asp-for="Capacity" class="form-control" />
+                <span asp-validation-for="Capacity" class="text-danger"></span>
+            </div>
+
+            <button type="submit">Edit</button>
+            <button asp-controller="Flight" asp-action="Index" id="cancelButton">Cancel</button>
+        </form>
+    </div>
+}
+else
+{
+    <h2 class="text-danger">
+        You can't accesss this page if you aren't logged in.
+    </h2>
+}
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

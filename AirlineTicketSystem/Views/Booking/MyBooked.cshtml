@@ -1,0 +1,33 @@
+﻿@model IEnumerable<Airline_Ticket_System.Entities.FlightPassenger>
+
+<h2>My Booked Flights</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">You have not booked any flights.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>From → To</th>
+                <th>Passenger</th>
+                <th>Booked On</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var booking in Model)
+            {
+                <tr>
+                    <td>@booking.Flight.DepartureCity → @booking.Flight.ArrivalCity</td>
+                    <td>@($"{booking.Passenger.FirstName} {booking.Passenger.FamilyName}")</td>
+                    <td>@booking.CreatedAt.ToString("g")</td>
+                    <td>@booking.Flight.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+

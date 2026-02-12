@@ -1,0 +1,62 @@
+﻿@using Airline_Ticket_System.Models.Account
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "User Profile";
+    var isUser = User.IsInRole("User");
+}
+
+@if (isUser)
+{
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h4 class="display-4 text-center text-primary">User Profile</h4>
+        </div>
+
+        <div>
+            <h6 class="display-6 text-center text-info">@TempData["SuccessMessage"]</h6>
+        </div>
+
+        <div class="row card-body">
+            <div class="col-md-8 offset-md-2">
+                <form method="post">
+                    <div class="form-group">
+                        <label asp-for="FirstName" class="control-label"></label>
+                        <input asp-for="FirstName" class="form-control" />
+                        <span asp-validation-for="FirstName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="FamilyName" class="control-label"></label>
+                        <input asp-for="FamilyName" class="form-control" />
+                        <span asp-validation-for="FamilyName" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Email" class="control-label">Email</label>
+                        <input asp-for="Email" class="form-control" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    @if (this.Model.Roles != null && this.Model.Roles.Any())
+                        {
+                        <div class="form-group">
+                            <span><strong>Roles:
+                                    @foreach (var item in this.Model.Roles)
+                                    {
+                                        @item                       
+                                    }
+                            </strong></span>
+                        </div>
+                    }
+
+                    <div class="card-footer text-center">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a asp-action="Index" asp-controller="Flight" class="btn btn-secondary">
+                            <i class="fas fa-list"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

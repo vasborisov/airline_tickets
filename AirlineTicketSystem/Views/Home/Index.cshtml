@@ -1,0 +1,23 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container mt-5">
+    <div class="text-center">
+        @if (User.Identity?.IsAuthenticated ?? false)
+        {
+            <h2>Welcome back, @User.Identity.Name!</h2>
+            <p class="lead">Ready to book your next flight?</p>
+            <a class="nav-link text-dark" id="flights" asp-controller="Flight" asp-action="Index">View Available Flights</a>
+        }
+        else
+        {
+            <h2>Welcome to Airline Ticket System</h2>
+            <p class="lead">Sign in or register to start booking your flights.</p>
+            <a class="nav-link text-dark" id="login" asp-controller="Account" asp-action="Login">Login</a>
+            <a class="nav-link text-dark" id="register" asp-controller="Account" asp-action="Register">Sign up</a>
+        }
+    </div>
+</div>
+
+
