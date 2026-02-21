@@ -26,7 +26,7 @@ namespace Airline_Ticket_System.Models.Flight
 
         [Required(ErrorMessage = "The Capacity field is required.")]
         [Display(Name = "Capacity")]
-        [Range(5, int.MaxValue, ErrorMessage = "Capacity must be at least 5 minutes.")]
+        [Range(5, int.MaxValue, ErrorMessage = "Capacity must be at least 5 passengers.")]
         public int Capacity { get; set; }
     }
 }

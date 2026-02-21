@@ -1,4 +1,4 @@
-﻿@model Airline_Ticket_System.Models.Flight.FlightViewModel
+﻿@model Airline_Ticket_System.Models.Flight.CreateFlightViewModel
 @{
     var isAdmin = User.IsInRole("Admin");
 }
@@ -9,7 +9,6 @@
 
 @if (isAdmin)
 {
-    <img class="img_deg" src="~/photo/flight_logo.jpg" />
     <div class="container-form">
         <h2>New Flight</h2>
 
@@ -27,7 +26,7 @@
             </div>
             <div>
                 <label asp-for="Duration">Duration</label>
-                <input type="number" asp-for="Duration" class="form-control" />
+                <input asp-for="Duration" class="form-control" />
                 <span asp-validation-for="Duration" class="text-danger"></span>
             </div>
             <div>
