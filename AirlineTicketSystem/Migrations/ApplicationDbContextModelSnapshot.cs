@@ -50,6 +50,7 @@ namespace Airline_Ticket_System.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
 
@@ -109,7 +110,7 @@ namespace Airline_Ticket_System.Migrations
 
                     b.Property<string>("ArrivalCity")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("ArrivalDateTime")
                         .HasColumnType("datetime2");
@@ -119,7 +120,7 @@ namespace Airline_Ticket_System.Migrations
 
                     b.Property<string>("DepartureCity")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("DepartureDateTime")
                         .HasColumnType("datetime2");
@@ -189,6 +190,9 @@ namespace Airline_Ticket_System.Migrations
                     b.Property<int>("FlightId")
                         .HasColumnType("int");
 
+                    b.Property<int>("PassengerId")
+                        .HasColumnType("int");
+
                     b.Property<decimal?>("PaymentAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -196,9 +200,6 @@ namespace Airline_Ticket_System.Migrations
                     b.Property<string>("PaymentStatus")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("PassengerId")
-                        .HasColumnType("int");
 
                     b.Property<string>("Pnr")
                         .IsRequired()

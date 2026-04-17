@@ -99,7 +99,7 @@ namespace Airline_Ticket_System.Tests
             await _controller.DailyFlights(testDate);
 
             // Assert
-            _reportServiceMock.Verify(r => r.GetDailyFlightsAsync(testDate), Times.Once);
+            _reportServiceMock.Verify(r => r.GetDailyFlightsAsync(testDate, default), Times.Once);
         }
 
         [Fact]
@@ -121,7 +121,7 @@ namespace Airline_Ticket_System.Tests
             await _controller.BookingStatistics();
 
             // Assert
-            _reportServiceMock.Verify(r => r.GetBookingStatisticsAsync(), Times.Once);
+            _reportServiceMock.Verify(r => r.GetBookingStatisticsAsync(default), Times.Once);
         }
 
         [Fact]
@@ -147,7 +147,7 @@ namespace Airline_Ticket_System.Tests
             // Assert
             _reportServiceMock.Verify(r => r.GetFinancialReportAsync(
                 It.IsAny<DateTime?>(), 
-                It.IsAny<DateTime?>()), Times.Once);
+                It.IsAny<DateTime?>(), default), Times.Once);
         }
     }
 }
