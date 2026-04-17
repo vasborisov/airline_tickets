@@ -1,20 +1,20 @@
 using Airline_Ticket_System.Configurations;
 using Airline_Ticket_System.Data;
 using Airline_Ticket_System.Data.Entities;
+using Airline_Ticket_System.Middleware;
 using Airline_Ticket_System.Repositories;
-using Airline_Ticket_System.Services.Interfaces;
+using Airline_Ticket_System.Repositories.Interfaces;
 using Airline_Ticket_System.Services;
+using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
 
 public class Program
 {
     public static void ConfigureServices(WebApplicationBuilder builder)
     {
 
-        // Configure the DbContext with SQL Server and the connection string
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -41,21 +41,29 @@ public class Program
         builder.Services.AddControllersWithViews();
 
         builder.Services.Configure<AdminUserSettings>(builder.Configuration.GetSection("AdminUser"));
+        builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 
+        builder.Services.AddScoped<IFlightRepository, FlightRepository>();
         builder.Services.AddScoped<IFlightService, FlightService>();
+        builder.Services.AddScoped<IBookingService, BookingService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IReportService, ReportService>();
+        
+        // Background services
+        builder.Services.AddHostedService<FlightReminderBackgroundService>();
     }
 
     public static void ConfigureApp(WebApplication app)
     {
-        // Configure the HTTP request pipeline.
-        if (!app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+        }
+        else
         {
             app.UseExceptionHandler("/Home/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
-
-        DatabaseSeedData.Initialize(app);
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
@@ -63,22 +71,23 @@ public class Program
         app.UseRouting();
 
         app.UseAuthentication();
+        app.UseMiddleware<ActiveAccountMiddleware>();
         app.UseAuthorization();
 
         app.MapControllerRoute(
             name: "default",
             pattern: "{controller=Home}/{action=Index}/{id?}");
-
     }
 
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
         ConfigureServices(builder);
 
         var app = builder.Build();
+        await DatabaseSeedData.Initialize(app);
         ConfigureApp(app);
-        app.Run();
-        
+        await app.RunAsync();
     }
 }

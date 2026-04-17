@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Airline_Ticket_System.Entities
@@ -7,6 +8,10 @@ namespace Airline_Ticket_System.Entities
     {
         [Key]
         public int Id { get; set; }
+
+        /// <summary>Optimistic concurrency token (SQL Server rowversion).</summary>
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
 
         [Required]
         public string DepartureCity { get; set; }
@@ -23,17 +28,44 @@ namespace Airline_Ticket_System.Entities
 
         [Required]
         public int Capacity { get; set; }
+
+        [Required]
+        public DateTime DepartureDateTime { get; set; }
+
+        [Required]
+        public DateTime ArrivalDateTime { get; set; }
+
+        [Required]
+        [MaxLength(10)]
+        public string FlightNumber { get; set; } = string.Empty;
+
+        /// <summary>Scheduled, Delayed, Cancelled, Boarding, Departed.</summary>
+        [Required]
+        [MaxLength(20)]
+        public string Status { get; set; } = "Scheduled";
+
+        [MaxLength(10)]
+        public string? Gate { get; set; }
+
         public virtual IList<FlightPassenger> FlightPassengers { get; set; } = new List<FlightPassenger>();
+
+        public Flight()
+        {
+        }
 
         public Flight(int id, string departureCity, string arrivalCity, int duration, decimal price, int capacity)
         {
-            this.Id = id;
-            this.DepartureCity = departureCity;
-            this.ArrivalCity = arrivalCity;
-            this.Duration = duration;
-            this.Price = price;
-            this.Capacity = capacity;
+            Id = id;
+            DepartureCity = departureCity;
+            ArrivalCity = arrivalCity;
+            Duration = duration;
+            Price = price;
+            Capacity = capacity;
+            var dep = DateTime.UtcNow.Date.AddHours(8);
+            DepartureDateTime = dep;
+            ArrivalDateTime = dep.AddMinutes(duration);
+            FlightNumber = id > 0 ? $"AT{id:D4}" : "AT0000";
+            Status = "Scheduled";
         }
-        
     }
 }

@@ -1,0 +1,52 @@
+@model Airline_Ticket_System.Models.Reports.BookingStatisticsViewModel
+@{
+    ViewData["Title"] = "Booking statistics";
+}
+
+<h1 class="page-title">Booking statistics</h1>
+<p class="page-lead mb-3">Confirmed vs cancelled and popular routes.</p>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card ticket-card">
+            <div class="card-body">
+                <h2 class="h5">Confirmed</h2>
+                <p class="display-4 mb-0">@Model.TotalConfirmedBookings</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card ticket-card">
+            <div class="card-body">
+                <h2 class="h5">Cancelled</h2>
+                <p class="display-4 mb-0">@Model.TotalCancelledBookings</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 font-weight-bold mb-3">Top routes</h2>
+<div class="table-responsive">
+    <table class="table table-ats table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Route</th>
+                <th>Bookings</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.TopRoutes)
+            {
+                <tr>
+                    <td>@r.Route</td>
+                    <td>@r.Bookings</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.TopRoutes.Any())
+{
+    <p class="text-muted mt-3">No route data yet.</p>
+}

@@ -22,6 +22,45 @@ namespace Airline_Ticket_System.Repositories
             modelBuilder.Entity<Flight>()
            .Property(f => f.Price)
            .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FlightPassenger>()
+                .HasIndex(fp => new { fp.FlightId, fp.PassengerId })
+                .IsUnique()
+                .HasFilter("[BookingStatus] = N'Confirmed'")
+                .HasDatabaseName("IX_FlightPassengers_FlightId_PassengerId_Active_Unique");
+
+            modelBuilder.Entity<FlightPassenger>()
+                .HasIndex(fp => fp.Pnr)
+                .IsUnique()
+                .HasDatabaseName("IX_FlightPassengers_Pnr_Unique");
+
+            modelBuilder.Entity<FlightPassenger>()
+                .Property(fp => fp.PaymentAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FlightPassenger>()
+                .Property(fp => fp.RefundAmount)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Flight>()
+                .HasIndex(f => f.DepartureCity)
+                .HasDatabaseName("IX_Flights_DepartureCity");
+
+            modelBuilder.Entity<Flight>()
+                .HasIndex(f => f.ArrivalCity)
+                .HasDatabaseName("IX_Flights_ArrivalCity");
+
+            modelBuilder.Entity<Flight>()
+                .HasIndex(f => f.DepartureDateTime)
+                .HasDatabaseName("IX_Flights_DepartureDateTime");
+
+            modelBuilder.Entity<FlightPassenger>()
+                .HasIndex(fp => fp.CreatedAt)
+                .HasDatabaseName("IX_FlightPassengers_CreatedAt");
+
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(u => u.IsActive)
+                .HasDefaultValue(true);
         }
     }
 }

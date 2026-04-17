@@ -1,55 +1,85 @@
-﻿@model Airline_Ticket_System.Models.Flight.FlightViewModel
+﻿@model Airline_Ticket_System.Models.Flight.EditFlightViewModel
 @{
     var isAdmin = User.IsInRole("Admin");
-}
-
-@{
-    ViewData["Title"] = "Edit Flight";
+    ViewData["Title"] = "Edit flight";
 }
 
 @if (isAdmin)
 {
-    <div class="container-form">
-        <h2>Edit Flight</h2>
+    <h1 class="page-title">Edit flight</h1>
+    <p class="page-lead mb-3">Update route, schedule, price, or capacity.</p>
 
-        <form method="post" asp-controller="Flight" asp-action="Edit" asp-route-id="@Model.Id">
+    <div class="container-form">
+        <form id="editFlightForm" asp-controller="Flight" asp-action="Edit" asp-route-id="@Model.Id">
             @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-            <div>
+            <input type="hidden" asp-for="Id" />
+            <div class="form-group">
+                <label asp-for="FlightNumber" class="control-label"></label>
+                <input asp-for="FlightNumber" class="form-control" />
+                <span asp-validation-for="FlightNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="DepartureCity" class="control-label"></label>
                 <input asp-for="DepartureCity" class="form-control" />
                 <span asp-validation-for="DepartureCity" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="ArrivalCity" class="control-label"></label>
                 <input type="text" asp-for="ArrivalCity" class="form-control" />
                 <span asp-validation-for="ArrivalCity" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
+                <label asp-for="DepartureDateTime"></label>
+                <input asp-for="DepartureDateTime" class="form-control" type="datetime-local" />
+                <span asp-validation-for="DepartureDateTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ArrivalDateTime"></label>
+                <input asp-for="ArrivalDateTime" class="form-control" type="datetime-local" />
+                <span asp-validation-for="ArrivalDateTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="Duration">Duration</label>
                 <input type="number" asp-for="Duration" class="form-control" />
                 <span asp-validation-for="Duration" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="Price"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="Capacity"></label>
                 <input type="number" asp-for="Capacity" class="form-control" />
                 <span asp-validation-for="Capacity" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="Status"></label>
+                <select asp-for="Status" class="form-control">
+                    <option value="Scheduled">Scheduled</option>
+                    <option value="Delayed">Delayed</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Boarding">Boarding</option>
+                    <option value="Departed">Departed</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label asp-for="Gate"></label>
+                <input asp-for="Gate" class="form-control" />
+                <span asp-validation-for="Gate" class="text-danger"></span>
+            </div>
 
-            <button type="submit">Edit</button>
-            <button asp-controller="Flight" asp-action="Index" id="cancelButton">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a class="btn btn-outline-secondary ml-2" asp-controller="Flight" asp-action="Index" id="cancelButton">Cancel</a>
         </form>
     </div>
 }
 else
 {
-    <h2 class="text-danger">
-        You can't accesss this page if you aren't logged in.
-    </h2>
+    <div class="message-panel message-panel--danger">
+        <h1 class="page-title text-danger">Access restricted</h1>
+        <p class="mb-0">You need administrator access to edit flights.</p>
+    </div>
 }
 
 @section Scripts {

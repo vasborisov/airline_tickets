@@ -1,5 +1,49 @@
-﻿/* Please see documentation at https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+﻿/* See https://docs.microsoft.com/aspnet/core/client-side/bundling-and-minification */
+
+:root {
+  --ats-navy: #1e3a8a;
+  --ats-blue: #3b82f6;
+  --ats-blue-dark: #2563eb;
+  --ats-page: #f8fafc;
+  --ats-surface: #ffffff;
+  --ats-border: #e2e8f0;
+  --ats-text: #1e293b;
+  --ats-muted: #64748b;
+  --ats-heading: #0f172a;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+  font-size: 15px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin-bottom: 60px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ats-text);
+  background-color: var(--ats-page);
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--ats-heading);
+  font-weight: 600;
+}
+
+a {
+  color: var(--ats-blue-dark);
+}
+
+a:hover {
+  color: var(--ats-navy);
+}
 
 a.navbar-brand {
   white-space: normal;
@@ -7,43 +51,41 @@ a.navbar-brand {
   word-break: break-all;
 }
 
-/* Provide sufficient contrast against white background */
-a {
-  color: #0366d6;
-}
-
 .btn-primary {
   color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  background-color: var(--ats-blue);
+  border-color: var(--ats-blue-dark);
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--ats-blue-dark);
+  border-color: var(--ats-navy);
+}
+
+.btn-secondary {
   color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  background-color: #64748b;
+  border-color: #475569;
 }
 
-/* Sticky footer styles
--------------------------------------------------- */
-html {
-  font-size: 14px;
-}
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: var(--ats-navy);
+  border-color: var(--ats-navy);
 }
 
 .border-top {
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--ats-border) !important;
 }
+
 .border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--ats-border) !important;
 }
 
 .box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
 }
 
 button.accept-policy {
@@ -51,33 +93,19 @@ button.accept-policy {
   line-height: inherit;
 }
 
-/* Sticky footer styles
--------------------------------------------------- */
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-    /* Margin bottom by footer height */
-    margin-bottom: 60px;
-    
-}
 .footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    white-space: nowrap;
-    line-height: 60px; /* Vertically center the text there */
-    
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
 }
 
-.img_deg 
-{
-    float: right ;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-    max-width: 400px;
-    width: 100%;
+.img_deg {
+  float: right;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+  max-width: 400px;
+  width: 100%;
 }

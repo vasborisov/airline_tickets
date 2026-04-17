@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "Напомняне за полет";
+    Layout = "~/Views/EmailTemplates/Shared/_EmailLayout.cshtml";
+}
+
+@model dynamic
+
+<h2>✈️ Напомняне за утрешния ви полет</h2>
+
+<p>Здравейте <strong>@Model.Passenger.FirstName @Model.Passenger.FamilyName</strong>,</p>
+
+<p>Това е автоматично напомняне, че утре имате планиран полет с нас!</p>
+
+<div class="highlight-box">
+    <p><strong>📋 Вашият PNR код:</strong></p>
+    <div class="pnr-code">@Model.PNR</div>
+</div>
+
+<div class="flight-details">
+    <div class="route">
+        ✈️ @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+    </div>
+    
+    <div class="info">
+        <span><strong>Полет:</strong></span>
+        <span>@Model.Flight.FlightNumber</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Заминаване:</strong></span>
+        <span>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Пристигане:</strong></span>
+        <span>@Model.Flight.ArrivalDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.Flight.Gate))
+    {
+        <div class="info">
+            <span><strong>Гейт:</strong></span>
+            <span>@Model.Flight.Gate</span>
+        </div>
+    }
+    
+    <div class="info">
+        <span><strong>Текущ статус:</strong></span>
+        <span>@Model.Flight.Status</span>
+    </div>
+</div>
+
+<p><strong>⏰ Важни напомняния за утре:</strong></p>
+<ul>
+    <li><strong>Регистрация:</strong> Пристигнете на летището поне 2 часа преди заминаване за международни полети и 1 час за вътрешни полети</li>
+    <li><strong>Документи:</strong> Носете валиден паспорт или лична карта</li>
+    <li><strong>Багаж:</strong> Проверете политиката за багаж и ограниченията</li>
+    <li><strong>Статус:</strong> Проверете за последни промени в статуса на полета</li>
+</ul>
+
+<div class="highlight-box">
+    <p><strong>📱 Online check-in:</strong></p>
+    <p>Можете да се регистрирате онлайн 24 часа преди заминаване, за да спестите време на летището.</p>
+</div>
+
+<a href="@Model.CheckinUrl" class="button">Online регистрация</a>
+
+<p><strong>🚗 Транспорт до летището:</strong></p>
+<ul>
+    <li>Планирайте пътуването си с отчитане на трафика</li>
+    <li>Резервирайте паркинг предварително (ако пътувате с кола)</li>
+    <li>Проверете разписанието на обществения транспорт</li>
+</ul>
+
+<p><strong>☂️ Проверете времето:</strong></p>
+<p>Проверете прогнозата за времето и на двете дестинации, за да се подготвите съответно.</p>
+
+<p><strong>📞 Нужда от помощ?</strong></p>
+<p>За въпроси или промени в последния момент, свържете се с нас като цитирате PNR кода <strong>@Model.PNR</strong>.</p>
+
+<p>Желаем ви безопасно пътуване и приятен полет!<br>
+<strong>Екипът на Airline Ticket System</strong></p>

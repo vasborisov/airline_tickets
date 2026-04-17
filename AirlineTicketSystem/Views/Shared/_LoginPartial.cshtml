@@ -6,8 +6,8 @@
     var isUser = User.IsInRole("User");
 }
 
-<ul class="navbar-nav ms-auto">
-    @if (User.Identity.IsAuthenticated)
+<ul class="navbar-nav ml-auto">
+    @if (User.Identity?.IsAuthenticated == true)
     {
         @if (isUser)
         {

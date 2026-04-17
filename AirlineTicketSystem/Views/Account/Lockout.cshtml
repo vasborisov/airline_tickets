@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Locked out";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="message-panel message-panel--danger">
+            <h1 class="page-title text-danger">Account locked</h1>
+            <p class="mb-3">This account has been temporarily locked. Please try again later.</p>
+            <p class="mb-0">
+                <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Return to sign in</a>
+            </p>
+        </div>
+    </div>
+</div>

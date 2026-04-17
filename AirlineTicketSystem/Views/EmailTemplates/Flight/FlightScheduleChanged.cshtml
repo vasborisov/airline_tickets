@@ -1,0 +1,141 @@
+@{
+    ViewData["Title"] = "Промяна в разписанието на полет";
+    Layout = "~/Views/EmailTemplates/Shared/_EmailLayout.cshtml";
+}
+
+@model dynamic
+
+<h2>⏰ Промяна в разписанието на вашия полет</h2>
+
+<p>Здравейте,</p>
+
+<p>Уведомяваме ви за <strong>важна промяна</strong> в разписанието на полета, за който имате резервация.</p>
+
+<div class="highlight-box">
+    <p><strong>⚠️ ВНИМАНИЕ: Промяна в полета</strong></p>
+    <p>Моля, прегледайте внимателно новото разписание по-долу и планирайте пътуването си съответно.</p>
+</div>
+
+<div class="flight-details">
+    <div class="route">
+        ✈️ @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+    </div>
+    
+    <div class="info">
+        <span><strong>Полет:</strong></span>
+        <span>@Model.Flight.FlightNumber</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Ново време на заминаване:</strong></span>
+        <span><strong>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</strong></span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Ново време на пристигане:</strong></span>
+        <span><strong>@Model.Flight.ArrivalDateTime.ToString("dd.MM.yyyy HH:mm")</strong></span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Актуален статус:</strong></span>
+        <span><strong>@Model.Flight.Status</strong></span>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.Flight.Gate))
+    {
+        <div class="info">
+            <span><strong>Гейт:</strong></span>
+            <span><strong>@Model.Flight.Gate</strong></span>
+        </div>
+    }
+</div>
+
+@if (Model.OriginalDepartureTime != null)
+{
+    <div class="highlight-box">
+        <p><strong>📊 Сравнение на промените:</strong></p>
+        <div class="info">
+            <span>Първоначално заминаване:</span>
+            <span>@Model.OriginalDepartureTime.ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+        <div class="info">
+            <span>Ново заминаване:</span>
+            <span><strong>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</strong></span>
+        </div>
+        
+        @{
+            var timeDiff = Model.Flight.DepartureDateTime - Model.OriginalDepartureTime;
+            var isDelayed = timeDiff.TotalMinutes > 0;
+            var isEarlier = timeDiff.TotalMinutes < 0;
+        }
+        
+        @if (isDelayed)
+        {
+            <div class="info">
+                <span>Забавяне:</span>
+                <span style="color: #dc2626;"><strong>@Math.Abs(timeDiff.TotalMinutes) минути</strong></span>
+            </div>
+        }
+        else if (isEarlier)
+        {
+            <div class="info">
+                <span>По-рано с:</span>
+                <span style="color: #059669;"><strong>@Math.Abs(timeDiff.TotalMinutes) минути</strong></span>
+            </div>
+        }
+    </div>
+}
+
+<p><strong>🎫 Вашата резервация:</strong></p>
+<ul>
+    <li><strong>Остава валидна</strong> за новото време на полета</li>
+    <li><strong>Не е необходимо</strong> да предприемате допълнителни действия</li>
+    <li><strong>PNR кодът ви остава същият</strong> за всички справки</li>
+</ul>
+
+@if (Model.Flight.Status == "Cancelled")
+{
+    <div class="highlight-box" style="border-color: #dc2626; background-color: #fef2f2;">
+        <p><strong>❌ ПОЛЕТЪТ Е ОТМЕНЕН</strong></p>
+        <p>Този полет е напълно отменен. Ще се свържем с вас в най-скоро време с опции за:</p>
+        <ul>
+            <li>Пребронираване на алтернативен полет</li>
+            <li>Пълно възстановяване на средствата</li>
+        </ul>
+        <p>Съжаляваме за неудобството!</p>
+    </div>
+}
+else
+{
+    <p><strong>✈️ Препоръки за пътуването:</strong></p>
+    <ul>
+        <li><strong>Регистрация:</strong> Пристигнете на летището съгласно новото разписание</li>
+        <li><strong>Транспорт:</strong> Коригирайте транспорта си до/от летището</li>
+        <li><strong>Хотели:</strong> При нужда променете резервациите си за настаняване</li>
+        <li><strong>Трансфери:</strong> Уведомете хора, които ви чакат за новото време</li>
+    </ul>
+}
+
+<a href="@Model.FlightDetailsUrl" class="button">Преглед на полета</a>
+
+<p><strong>📞 Имате нужда от помощ?</strong></p>
+<p>Ако промяната създава проблеми за вас или имате въпроси, моля свържете се с нашия екип незабавно:</p>
+<ul>
+    <li>📧 Имейл: support@airlinetickets.bg</li>
+    <li>☎️ Телефон: +359 2 XXX XXXX (24/7)</li>
+    <li>💬 Онлайн чат в системата</li>
+</ul>
+
+@if (Model.Flight.Status != "Cancelled")
+{
+    <p><strong>🔔 Допълнителни уведомления:</strong></p>
+    <p>Ще получите автоматично уведомление при всяка последваща промяна в статуса или разписанието на полета.</p>
+    
+    <p>Съжаляваме за неудобството и благодарим за разбирането!<br>
+    <strong>Екипът на Airline Ticket System</strong></p>
+}
+else
+{
+    <p>Съжаляваме дълбоко за причиненото неудобство и ще направим всичко възможно да намерим най-доброто решение за вас.<br>
+    <strong>Екипът на Airline Ticket System</strong></p>
+}

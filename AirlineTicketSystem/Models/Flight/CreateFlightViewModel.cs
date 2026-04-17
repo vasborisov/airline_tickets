@@ -28,5 +28,18 @@ namespace Airline_Ticket_System.Models.Flight
         [Display(Name = "Capacity")]
         [Range(5, int.MaxValue, ErrorMessage = "Capacity must be at least 5 passengers.")]
         public int Capacity { get; set; }
+
+        [Display(Name = "Flight number")]
+        [Required(ErrorMessage = "Flight number is required.")]
+        [MaxLength(10)]
+        public string FlightNumber { get; set; } = "";
+
+        [Display(Name = "Departure (local, stored as entered)")]
+        [Required]
+        public DateTime DepartureDateTime { get; set; } = DateTime.UtcNow.AddDays(1).Date.AddHours(8);
+
+        [Display(Name = "Gate")]
+        [MaxLength(10)]
+        public string? Gate { get; set; }
     }
 }
