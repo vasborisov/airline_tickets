@@ -3,6 +3,7 @@ using Airline_Ticket_System.Data.Entities;
 using Airline_Ticket_System.Models;
 using Airline_Ticket_System.Models.Account;
 using Airline_Ticket_System.Repositories;
+using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,19 +19,22 @@ namespace Airline_Ticket_System.Controllers
 
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly ILogger<AccountController> _logger;
+        private readonly IEmailService _emailService;
 
         public AccountController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             SignInManager<ApplicationUser> signInManager,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            IEmailService emailService)
         {
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
             _logger = logger;
+            _emailService = emailService;
         }
 
         // Register action
@@ -44,7 +48,8 @@ namespace Airline_Ticket_System.Controllers
         [HttpPost]
         [AllowAnonymous]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        [ActionName("Register")]
+        public async Task<IActionResult> RegisterAsync(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -60,7 +65,8 @@ namespace Airline_Ticket_System.Controllers
                     UserName = model.Email, 
                     Email = model.Email,
                     FirstName = model.FirstName,
-                    FamilyName = model.FamilyName
+                    FamilyName = model.FamilyName,
+                    IsActive = true
                 };
                 var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -69,6 +75,7 @@ namespace Airline_Ticket_System.Controllers
                     await _userManager.AddToRoleAsync(user, UserRolesEnum.User.ToString());
 
                     _logger.LogInformation("User registered successfully.");
+                    await _emailService.SendWelcomeAsync(user.Email!, $"{user.FirstName} {user.FamilyName}");
 
                     return RedirectToAction("Login");
                 }
@@ -90,7 +97,8 @@ namespace Airline_Ticket_System.Controllers
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RegisterOperator(RegisterViewModel model)
+        [ActionName("RegisterOperator")]
+        public async Task<IActionResult> RegisterOperatorAsync(RegisterViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -107,7 +115,8 @@ namespace Airline_Ticket_System.Controllers
                     UserName = model.Email,
                     Email = model.Email,
                     FirstName = model.FirstName,
-                    FamilyName = model.FamilyName
+                    FamilyName = model.FamilyName,
+                    IsActive = true
                 };
                 var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -116,6 +125,7 @@ namespace Airline_Ticket_System.Controllers
                     await _userManager.AddToRoleAsync(user, UserRolesEnum.Operator.ToString());
 
                     _logger.LogInformation("Operator registered successfully.");
+                    await _emailService.SendOperatorCreatedAsync(user.Email!, $"{user.FirstName} {user.FamilyName}");
 
                     return RedirectToAction("Users");
                 }
@@ -138,13 +148,20 @@ namespace Airline_Ticket_System.Controllers
         // Login POST action
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        [ActionName("Login")]
+        public async Task<IActionResult> LoginAsync(LoginViewModel model)
         {
             if (ModelState.IsValid)
             {
                 var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user != null)
                 {
+                    if (!user.IsActive)
+                    {
+                        ModelState.AddModelError(string.Empty, "This account is disabled. Contact an administrator.");
+                        return View(model);
+                    }
+
                     var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
                     if (result.Succeeded)
                     {
@@ -170,8 +187,8 @@ namespace Airline_Ticket_System.Controllers
             return View(model);
         }
 
-        // Logout action
-        public async Task<IActionResult> Logout()
+        [ActionName("Logout")]
+        public async Task<IActionResult> LogoutAsync()
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
@@ -179,7 +196,8 @@ namespace Airline_Ticket_System.Controllers
 
         [HttpGet]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> EditProfile()
+        [ActionName("EditProfile")]
+        public async Task<IActionResult> EditProfileAsync()
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null)
@@ -210,7 +228,8 @@ namespace Airline_Ticket_System.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> EditProfile(ProfileViewModel model)
+        [ActionName("EditProfile")]
+        public async Task<IActionResult> EditProfileAsync(ProfileViewModel model)
         {
             if (ModelState.IsValid)
             {
@@ -253,7 +272,8 @@ namespace Airline_Ticket_System.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Users()
+        [ActionName("Users")]
+        public async Task<IActionResult> UsersAsync()
         {
             var adminRoleId = await _context.Roles
                                 .Where(r => r.Name == UserRolesEnum.Admin.ToString())
@@ -273,6 +293,44 @@ namespace Airline_Ticket_System.Controllers
                 .ToListAsync();
 
             return View(nonAdminUsers);
+        }
+
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleUserStatus(string id)
+        {
+            var current = await _userManager.GetUserAsync(User);
+            if (current?.Id == id)
+            {
+                TempData["ErrorMessage"] = "You cannot change your own active status.";
+                return RedirectToAction("Users");
+            }
+
+            var target = await _userManager.FindByIdAsync(id);
+            if (target == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return RedirectToAction("Users");
+            }
+
+            if (await _userManager.IsInRoleAsync(target, UserRolesEnum.Admin.ToString()))
+            {
+                TempData["ErrorMessage"] = "Admin accounts cannot be disabled from this screen.";
+                return RedirectToAction("Users");
+            }
+
+            target.IsActive = !target.IsActive;
+            await _userManager.UpdateAsync(target);
+            _logger.LogInformation("User {UserId} IsActive={Active} toggled by {AdminId}", id, target.IsActive, current?.Id);
+
+            await _emailService.SendAccountActiveChangedAsync(
+                target.Email!,
+                $"{target.FirstName} {target.FamilyName}",
+                target.IsActive);
+
+            TempData["SuccessMessage"] = $"User {target.Email} is now {(target.IsActive ? "active" : "inactive")}.";
+            return RedirectToAction("Users");
         }
 
         public IActionResult AccessDenied()

@@ -50,7 +50,8 @@
                         {
                             foreach (var error in result.Errors)
                             {
-                                Console.WriteLine($"Error: {error.Description}");
+                                // Log error to debug console instead of regular console to avoid test output noise
+                                System.Diagnostics.Debug.WriteLine($"Error: {error.Description}");
                             }
                         }
                         else
@@ -65,7 +66,8 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error creating role {roleName}: {ex.Message}");
+                    // Log error to debug console instead of regular console to avoid test output noise
+                    System.Diagnostics.Debug.WriteLine($"Error creating role {roleName}: {ex.Message}");
                 }
             }
         }
@@ -76,10 +78,12 @@
             var user = await userManager.FindByEmailAsync(adminSettings.Email);
             if (user == null)
             {
-                user = new ApplicationUser { 
+                user = new ApplicationUser {
                     FirstName = adminSettings.Name,
-                    UserName = adminSettings.Email, 
-                    Email = adminSettings.Email
+                    FamilyName = "Administrator",
+                    UserName = adminSettings.Email,
+                    Email = adminSettings.Email,
+                    IsActive = true
                 };
                 var createUser = await userManager.CreateAsync(user, adminSettings.Password);
 

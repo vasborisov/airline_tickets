@@ -1,6 +1,4 @@
-﻿
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Airline_Ticket_System.Models.Flight
 {
@@ -14,43 +12,55 @@ namespace Airline_Ticket_System.Models.Flight
         public int Duration { get; set; }
         public decimal Price { get; set; }
         public int Capacity { get; set; }
-        public bool IsFullyBooked{ get;}
+        public bool IsFullyBooked { get; }
 
-        public readonly IList<Passenger.PassengerViewModel> PassengerViewModels;
+        public readonly IList<Passenger.PassengerViewModel>? PassengerViewModels;
 
         public string? SearchDeparetureCity { get; set; }
 
+        [Display(Name = "Departure (UTC)")]
+        public DateTime DepartureDateTime { get; set; }
+
+        [Display(Name = "Flight no.")]
+        public string FlightNumber { get; set; } = "";
+
+        public string Status { get; set; } = "Scheduled";
+
+        public string? Gate { get; set; }
+
         public FlightViewModel(int id, string departureCity, string arrivalCity, int duration, decimal price, int capacity, bool isFullyBooked, IList<Passenger.PassengerViewModel> passengerViewModels)
         {
-            this.Id = id;
-            this.DepartureCity = departureCity;
-            this.ArrivalCity = arrivalCity;
-            this.Duration = duration;
-            this.Price = price;
-            this.Capacity = capacity;
-            this.IsFullyBooked = isFullyBooked;
-            this.PassengerViewModels = passengerViewModels;
+            Id = id;
+            DepartureCity = departureCity;
+            ArrivalCity = arrivalCity;
+            Duration = duration;
+            Price = price;
+            Capacity = capacity;
+            IsFullyBooked = isFullyBooked;
+            PassengerViewModels = passengerViewModels;
         }
 
         public FlightViewModel(int id, string departureCity, string arrivalCity, int duration, decimal price, int capacity, bool isFullyBooked)
         {
-            this.Id = id;
-            this.DepartureCity = departureCity;
-            this.ArrivalCity = arrivalCity;
-            this.Duration = duration;
-            this.Price = price;
-            this.Capacity = capacity;
-            this.IsFullyBooked = isFullyBooked;
+            Id = id;
+            DepartureCity = departureCity;
+            ArrivalCity = arrivalCity;
+            Duration = duration;
+            Price = price;
+            Capacity = capacity;
+            IsFullyBooked = isFullyBooked;
+            PassengerViewModels = null;
         }
 
-    public FlightViewModel(int id, string departureCity, string arrivalCity, int duration, decimal price, int capacity)
+        public FlightViewModel(int id, string departureCity, string arrivalCity, int duration, decimal price, int capacity)
         {
-            this.Id = id;
-            this.DepartureCity = departureCity;
-            this.ArrivalCity = arrivalCity;
-            this.Duration = duration;
-            this.Price = price;
-            this.Capacity = capacity;
+            Id = id;
+            DepartureCity = departureCity;
+            ArrivalCity = arrivalCity;
+            Duration = duration;
+            Price = price;
+            Capacity = capacity;
+            PassengerViewModels = null;
         }
     }
 }

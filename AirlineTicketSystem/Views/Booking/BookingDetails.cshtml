@@ -1,0 +1,28 @@
+@model Airline_Ticket_System.Entities.FlightPassenger
+@{
+    ViewData["Title"] = "Booking " + Model.Pnr;
+}
+
+<h1 class="page-title">Booking @Model.Pnr</h1>
+<p class="page-lead mb-3">Status: <strong>@Model.BookingStatus</strong></p>
+
+<div class="card ticket-card mb-4">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Passenger</dt>
+            <dd class="col-sm-9">@Model.Passenger?.FirstName @Model.Passenger?.FamilyName</dd>
+            <dt class="col-sm-3">Flight</dt>
+            <dd class="col-sm-9">@Model.Flight?.FlightNumber — @Model.Flight?.DepartureCity → @Model.Flight?.ArrivalCity</dd>
+            <dt class="col-sm-3">Departure (UTC)</dt>
+            <dd class="col-sm-9">@Model.Flight?.DepartureDateTime.ToString("g")</dd>
+            <dt class="col-sm-3">Fare</dt>
+            <dd class="col-sm-9">@(Model.PaymentAmount?.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")) ?? Model.Flight?.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")))</dd>
+            <dt class="col-sm-3">Payment</dt>
+            <dd class="col-sm-9">@Model.PaymentStatus</dd>
+        </dl>
+    </div>
+</div>
+
+<p class="mb-0">
+    <a class="btn btn-outline-secondary" asp-controller="Flight" asp-action="Index">Back to flights</a>
+</p>

@@ -1,4 +1,4 @@
-﻿
+﻿using System.ComponentModel.DataAnnotations;
 using Airline_Ticket_System.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,5 +16,22 @@ namespace Airline_Ticket_System.Entities
 
         public string? CreatedByUserId { get; set; }
         public ApplicationUser? CreatedByUser { get; set; }
+
+        [Required]
+        [MaxLength(6)]
+        public string Pnr { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(20)]
+        public string BookingStatus { get; set; } = "Confirmed";
+
+        public decimal? PaymentAmount { get; set; }
+
+        [MaxLength(20)]
+        public string? PaymentStatus { get; set; }
+
+        public DateTime? CancelledAt { get; set; }
+
+        public decimal? RefundAmount { get; set; }
     }
 }

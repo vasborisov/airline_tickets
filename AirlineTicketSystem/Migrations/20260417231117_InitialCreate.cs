@@ -30,7 +30,9 @@ namespace Airline_Ticket_System.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FamilyName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -57,11 +59,17 @@ namespace Airline_Ticket_System.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    DepartureCity = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ArrivalCity = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
+                    DepartureCity = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ArrivalCity = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Duration = table.Column<int>(type: "int", nullable: false),
                     Price = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Capacity = table.Column<int>(type: "int", nullable: false)
+                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    DepartureDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ArrivalDateTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FlightNumber = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Gate = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -75,7 +83,7 @@ namespace Airline_Ticket_System.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    FamilyName = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -195,11 +203,24 @@ namespace Airline_Ticket_System.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FlightId = table.Column<int>(type: "int", nullable: false),
-                    PassengerId = table.Column<int>(type: "int", nullable: false)
+                    PassengerId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedByUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Pnr = table.Column<string>(type: "nvarchar(6)", maxLength: 6, nullable: false),
+                    BookingStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    PaymentAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    CancelledAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    RefundAmount = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FlightPassengers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_FlightPassengers_AspNetUsers_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_FlightPassengers_Flights_FlightId",
                         column: x => x.FlightId,
@@ -254,14 +275,47 @@ namespace Airline_Ticket_System.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FlightPassengers_FlightId",
+                name: "IX_FlightPassengers_CreatedAt",
                 table: "FlightPassengers",
-                column: "FlightId");
+                column: "CreatedAt");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlightPassengers_CreatedByUserId",
+                table: "FlightPassengers",
+                column: "CreatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlightPassengers_FlightId_PassengerId_Active_Unique",
+                table: "FlightPassengers",
+                columns: new[] { "FlightId", "PassengerId" },
+                unique: true,
+                filter: "[BookingStatus] = N'Confirmed'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FlightPassengers_PassengerId",
                 table: "FlightPassengers",
                 column: "PassengerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FlightPassengers_Pnr_Unique",
+                table: "FlightPassengers",
+                column: "Pnr",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Flights_ArrivalCity",
+                table: "Flights",
+                column: "ArrivalCity");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Flights_DepartureCity",
+                table: "Flights",
+                column: "DepartureCity");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Flights_DepartureDateTime",
+                table: "Flights",
+                column: "DepartureDateTime");
         }
 
         /// <inheritdoc />

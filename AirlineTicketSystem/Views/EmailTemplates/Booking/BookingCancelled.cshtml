@@ -1,0 +1,94 @@
+@{
+    ViewData["Title"] = "Отмяна на резервация";
+    Layout = "~/Views/EmailTemplates/Shared/_EmailLayout.cshtml";
+}
+
+@model dynamic
+
+<h2>❌ Отмяна на резервация</h2>
+
+<p>Здравейте,</p>
+
+<p>Уведомяваме ви, че резервацията ви е успешно <strong>отменена</strong> според вашето искане.</p>
+
+<div class="highlight-box">
+    <p><strong>📋 Отменена резервация:</strong></p>
+    <div class="pnr-code">@Model.PNR</div>
+    <p><strong>Дата на отмяна:</strong> @DateTime.Now.ToString("dd.MM.yyyy HH:mm")</p>
+</div>
+
+@if (Model.RefundAmount.HasValue && Model.RefundAmount > 0)
+{
+    <div class="highlight-box">
+        <p><strong>💰 Информация за възстановяването:</strong></p>
+        <p><strong>Сума за възстановяване:</strong> @Model.RefundAmount.Value.ToString("F2") лв.</p>
+        <p><strong>Метод на възстановяване:</strong> По същия начин като оригиналното плащане</p>
+        <p><strong>Време за обработка:</strong> 3-7 работни дни</p>
+    </div>
+    
+    <p><strong>📝 Условия за възстановяване:</strong></p>
+    <ul>
+        <li>Възстановяването се обработва автоматично</li>
+        <li>Ще получите потвърждение когато средствата са изпратени</li>
+        <li>За въпроси използвайте PNR кода @Model.PNR</li>
+    </ul>
+}
+else if (Model.RefundAmount.HasValue && Model.RefundAmount == 0)
+{
+    <div class="highlight-box">
+        <p><strong>ℹ️ Информация за възстановяването:</strong></p>
+        <p>Според условията за тази резервация, не се дължи възстановяване на средства.</p>
+        <p>Това може да се дължи на:</p>
+        <ul>
+            <li>Отмяна в последния момент</li>
+            <li>Специални условия на билета</li>
+            <li>Административни такси</li>
+        </ul>
+    </div>
+}
+
+<div class="flight-details">
+    <p><strong>📋 Детайли на отмененото пътуване:</strong></p>
+    
+    @if (Model.Flight != null)
+    {
+        <div class="route">
+            ✈️ @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+        </div>
+        
+        <div class="info">
+            <span><strong>Полет:</strong></span>
+            <span>@Model.Flight.FlightNumber</span>
+        </div>
+        
+        <div class="info">
+            <span><strong>Планирано заминаване:</strong></span>
+            <span>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+        </div>
+    }
+</div>
+
+<p><strong>⚠️ Важни бележки:</strong></p>
+<ul>
+    <li>Тази резервация вече не е валидна за пътуване</li>
+    <li>Ако имате багаж регистриран за този полет, моля свържете се с нас</li>
+    <li>За бъдещи резервации можете да използвате системата като преди</li>
+</ul>
+
+@if (Model.RefundAmount.HasValue && Model.RefundAmount > 0)
+{
+    <p><strong>📬 Следващи стъпки:</strong></p>
+    <ul>
+        <li>Ще получите имейл потвърждение когато възстановяването е обработено</li>
+        <li>Проверете банковата си сметка след 3-7 работни дни</li>
+        <li>При въпроси цитирайте PNR: @Model.PNR</li>
+    </ul>
+}
+
+<a href="@Model.NewBookingUrl" class="button">Нова резервация</a>
+
+<p><strong>💬 Имате нужда от помощ?</strong></p>
+<p>За всички въпроси относно отмяната или възстановяването, моля свържете се с нашия екип за клиентска поддръжка, като цитирате PNR кода <strong>@Model.PNR</strong>.</p>
+
+<p>Надяваме се скоро да ви видим отново!<br>
+<strong>Екипът на Airline Ticket System</strong></p>

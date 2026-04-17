@@ -20,7 +20,7 @@ namespace Airline_Ticket_System.Models.Booking
         [Display(Name = "Family Name")]
         public string FamilyName { get; set; }
 
-        public int? SelectedPassengerId { get; set; }
+        public string? SelectedPassengerId { get; set; }
         public List<SelectListItem>? ExistingPassengers { get; set; }
         public bool CreateNewPassenger { get; set; }
         public bool IsBookingForSelf { get; set; } = false;

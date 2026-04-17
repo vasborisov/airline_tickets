@@ -1,39 +1,36 @@
 ﻿using Airline_Ticket_System.Entities;
-using Airline_Ticket_System.Models.Flight;
-using Airline_Ticket_System.Models.Passenger;
-using Airline_Ticket_System.Repositories;
+using Airline_Ticket_System.Repositories.Interfaces;
+using Airline_Ticket_System.Repositories.Models;
 using Airline_Ticket_System.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Airline_Ticket_System.Services
 {
     public class FlightService : IFlightService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IFlightRepository _flights;
 
-        public FlightService(ApplicationDbContext context)
+        public FlightService(IFlightRepository flights)
         {
-            _context = context;
+            _flights = flights;
         }
 
-        public async Task AddFlight(Flight newFlightEntity)
+        public async Task AddFlightAsync(Flight newFlightEntity)
         {
-            await _context.Flights.AddAsync(newFlightEntity);
-            await _context.SaveChangesAsync();
+            await _flights.AddAsync(newFlightEntity);
+            await _flights.SaveChangesAsync();
         }
 
         public async Task DeleteFlightAsync(Flight flight)
         {
             if (flight != null)
             {
-                _context.Flights.Remove(flight);
-                await _context.SaveChangesAsync();
-            } 
+                _flights.Remove(flight);
+                await _flights.SaveChangesAsync();
+            }
         }
 
         public async Task BookSeatAsync(Flight flight, Passenger passenger)
         {
-            
             flight.Capacity -= 1;
 
             var flightPassenger = new FlightPassenger
@@ -42,21 +39,19 @@ namespace Airline_Ticket_System.Services
                 PassengerId = passenger.Id
             };
 
-            await _context.FlightPassengers.AddAsync(flightPassenger);
-            await _context.SaveChangesAsync();
+            await _flights.AddFlightPassengerAsync(flightPassenger);
+            await _flights.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Flight>> LoadAllFlightsAsync()
         {
-            return await _context.Flights
-                        .Include(f => f.FlightPassengers)
-                        .ThenInclude(fp => fp.Passenger)
-                        .ToListAsync();
+            var list = await _flights.GetAllWithPassengersAsync();
+            return list;
         }
 
-        public void CancelBookedSeat()
-        {
-            throw new System.NotImplementedException();
-        }
+        public Task<(IReadOnlyList<Flight> Items, int TotalCount)> SearchFlightsAsync(FlightSearchCriteria criteria, CancellationToken cancellationToken = default)
+            => _flights.SearchAsync(criteria, cancellationToken);
+
+        public Task CancelBookedSeatAsync() => Task.CompletedTask;
     }
 }

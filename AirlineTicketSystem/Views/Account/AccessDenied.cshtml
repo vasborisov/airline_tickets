@@ -1,14 +1,22 @@
 ﻿@{
-    ViewData["Title"] = "Access Denied";
+    ViewData["Title"] = "Access denied";
 }
 
-<div class="card mb-4 shadow-sm">
-    <div class="card-header">
-        <h4 class="display-4 text-center text-primary">Access Denied</h4>
-    </div>
-
-    <div class="row card-body">
-        <p>You do not have action permission.</p>
-        <p>If you think this is a mistake, please contact the administrator.</p>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card login-card mb-4">
+            <div class="card-header text-center py-3">
+                <h1 class="page-title-login">Access denied</h1>
+                <p class="page-lead mb-0 small">You do not have permission for this action.</p>
+            </div>
+            <div class="card-body">
+                <p class="mb-2">If you believe this is a mistake, contact an administrator.</p>
+                <p class="mb-0">
+                    <a asp-controller="Home" asp-action="Index">Return home</a>
+                    &nbsp;·&nbsp;
+                    <a asp-controller="Account" asp-action="Login">Sign in</a>
+                </p>
+            </div>
+        </div>
     </div>
 </div>

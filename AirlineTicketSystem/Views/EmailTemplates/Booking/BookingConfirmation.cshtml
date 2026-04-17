@@ -1,0 +1,96 @@
+@{
+    ViewData["Title"] = "Потвърждение на резервация";
+    Layout = "~/Views/EmailTemplates/Shared/_EmailLayout.cshtml";
+}
+
+@model dynamic
+
+<h2>🎫 Потвърждение на резервация</h2>
+
+<p>Здравейте <strong>@Model.Passenger.FirstName @Model.Passenger.FamilyName</strong>,</p>
+
+<p>Благодарим ви за резервацията! Вашият авиобилет е успешно резервиран и потвърден.</p>
+
+<div class="highlight-box">
+    <p><strong>📋 Вашият PNR код:</strong></p>
+    <div class="pnr-code">@Model.PNR</div>
+    <p><small>Запазете този код за бъдещи справки и проверки</small></p>
+</div>
+
+<div class="flight-details">
+    <div class="route">
+        ✈️ @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+    </div>
+    
+    <div class="info">
+        <span><strong>Полет:</strong></span>
+        <span>@Model.Flight.FlightNumber</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Дата и час на заминаване:</strong></span>
+        <span>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Дата и час на пристигане:</strong></span>
+        <span>@Model.Flight.ArrivalDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+    </div>
+    
+    <div class="info">
+        <span><strong>Продължителност:</strong></span>
+        <span>@Model.Flight.Duration мин</span>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(Model.Flight.Gate))
+    {
+        <div class="info">
+            <span><strong>Гейт:</strong></span>
+            <span>@Model.Flight.Gate</span>
+        </div>
+    }
+    
+    <div class="info">
+        <span><strong>Статус:</strong></span>
+        <span>@Model.Flight.Status</span>
+    </div>
+</div>
+
+<div class="highlight-box">
+    <p><strong>👤 Пасажерски данни:</strong></p>
+    <p><strong>Име:</strong> @Model.Passenger.FirstName @Model.Passenger.FamilyName</p>
+    <p><strong>Имейл:</strong> @Model.Passenger.Email</p>
+    <p><strong>Дата на раждане:</strong> @Model.Passenger.DateOfBirth.ToString("dd.MM.yyyy")</p>
+    @if (!string.IsNullOrEmpty(Model.Passenger.PassportId))
+    {
+        <p><strong>Паспорт:</strong> @Model.Passenger.PassportId</p>
+    }
+</div>
+
+@if (Model.PaymentAmount.HasValue)
+{
+    <div class="highlight-box">
+        <p><strong>💳 Плащане:</strong></p>
+        <p><strong>Сума:</strong> @Model.PaymentAmount.Value.ToString("F2") лв.</p>
+        <p><strong>Статус:</strong> @Model.PaymentStatus</p>
+    </div>
+}
+
+<p><strong>⏰ Важни напомняния:</strong></p>
+<ul>
+    <li><strong>Регистрация:</strong> Моля, пристигнете на летището поне 2 часа преди заминаване за международни полети и 1 час за вътрешни полети</li>
+    <li><strong>Документи:</strong> Носете валиден паспорт или лична карта (според дестинацията)</li>
+    <li><strong>Промени:</strong> За промени в резервацията свържете се с нас поне 24 часа предварително</li>
+    <li><strong>Отмяна:</strong> Можете да отмените резервацията в системата до 24 часа преди заминаване</li>
+</ul>
+
+<a href="@Model.BookingDetailsUrl" class="button">Преглед на резервацията</a>
+
+<p><strong>🔔 Уведомления:</strong></p>
+<p>Ще получите автоматично уведомление ако има промени в разписанието на полета или статуса му.</p>
+
+<p><strong>📞 Нужда от помощ?</strong></p>
+<p>Ако имате въпроси относно резервацията или полета, използвайте PNR кода <strong>@Model.PNR</strong> при комуникация с нас.</p>
+
+<p>Желаем ви приятно пътуване!<br>
+<strong>Екипът на Airline Ticket System</strong></p>

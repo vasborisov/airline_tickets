@@ -1,0 +1,101 @@
+@model Airline_Ticket_System.Models.Reports.FinancialReportViewModel
+@{
+    ViewData["Title"] = "Financial report";
+    var labels = Model.ByFlight.Select(x => x.FlightNumber).ToList();
+    var data = Model.ByFlight.Select(x => (double)x.Revenue).ToList();
+}
+
+<h1 class="page-title">Financial report</h1>
+<p class="page-lead mb-3">Gross sales, refunds, and revenue by flight (filtered range uses booking / cancellation timestamps in UTC).</p>
+
+<form method="get" class="filter-bar mb-3">
+    <div class="form-row align-items-end">
+        <div class="form-group col-md-3 mb-0">
+            <label for="from">From (UTC date)</label>
+            <input class="form-control" type="date" id="from" name="from" value="@(Model.FromUtc?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="form-group col-md-3 mb-0">
+            <label for="to">To (UTC date)</label>
+            <input class="form-control" type="date" id="to" name="to" value="@(Model.ToUtc?.AddDays(-1).ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="form-group col-md-auto mb-0">
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </div>
+    </div>
+</form>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card ticket-card"><div class="card-body">
+            <h2 class="h6 text-muted">Gross sales</h2>
+            <p class="h3 mb-0">@Model.GrossSales.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card ticket-card"><div class="card-body">
+            <h2 class="h6 text-muted">Refunds</h2>
+            <p class="h3 mb-0">@Model.Refunds.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card ticket-card"><div class="card-body">
+            <h2 class="h6 text-muted">Net revenue</h2>
+            <p class="h3 mb-0">@Model.NetRevenue.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
+        </div></div>
+    </div>
+</div>
+
+@if (Model.ByFlight.Any())
+{
+    <div class="mb-4" style="max-width: 720px;">
+        <canvas id="revChart" height="120"></canvas>
+    </div>
+}
+
+<div class="table-responsive">
+    <table class="table table-ats table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Flight</th>
+                <th>Route</th>
+                <th>Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.ByFlight)
+            {
+                <tr>
+                    <td>@r.FlightNumber</td>
+                    <td>@r.Route</td>
+                    <td>@r.Revenue.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    @if (Model.ByFlight.Any())
+    {
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" crossorigin="anonymous"></script>
+        <script>
+            const ctx = document.getElementById('revChart');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels)),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(data)),
+                        backgroundColor: 'rgba(30, 58, 138, 0.7)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        </script>
+    }
+}

@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Airline_Ticket_System.Services.Interfaces;
 
 namespace Airline_Ticket_System.Tests
 {
@@ -22,6 +23,7 @@ namespace Airline_Ticket_System.Tests
         private readonly Mock<RoleManager<IdentityRole>> _roleManagerMock;
         private readonly Mock<SignInManager<ApplicationUser>> _signInManagerMock;
         private readonly Mock<ILogger<AccountController>> _loggerMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
 
         private readonly ApplicationDbContext _context;
         private readonly AccountController _controller;
@@ -39,6 +41,7 @@ namespace Airline_Ticket_System.Tests
             _roleManagerMock = new Mock<RoleManager<IdentityRole>>(Mock.Of<IRoleStore<IdentityRole>>(), null, null, null, null);
             _signInManagerMock = new Mock<SignInManager<ApplicationUser>>(_userManagerMock.Object, Mock.Of<IHttpContextAccessor>(), Mock.Of<IUserClaimsPrincipalFactory<ApplicationUser>>(), null, null, null, null);
             _loggerMock = new Mock<ILogger<AccountController>>();
+            _emailServiceMock = new Mock<IEmailService>();
 
             // Initialize controller with mocks
             _controller = new AccountController(
@@ -46,7 +49,8 @@ namespace Airline_Ticket_System.Tests
                 _userManagerMock.Object,
                 _roleManagerMock.Object,
                 _signInManagerMock.Object,
-                _loggerMock.Object
+                _loggerMock.Object,
+                _emailServiceMock.Object
             );
         }
 
@@ -65,7 +69,7 @@ namespace Airline_Ticket_System.Tests
             };
 
             // Act
-            var result = await _controller.Register(model);
+            var result = await _controller.RegisterAsync(model);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -82,7 +86,8 @@ namespace Airline_Ticket_System.Tests
                 _userManagerMock.Object,
                 _roleManagerMock.Object,
                 _signInManagerMock.Object,
-                _loggerMock.Object
+                _loggerMock.Object,
+                _emailServiceMock.Object
             );
 
             var model = new RegisterViewModel
@@ -104,11 +109,18 @@ namespace Airline_Ticket_System.Tests
                 .ReturnsAsync(IdentityResult.Success);
 
             // Act
-            var result = await controller.Register(model);
+            var result = await controller.RegisterAsync(model);
 
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("Login", redirectResult.ActionName);
+
+            // Verify that welcome email was sent
+            _emailServiceMock.Verify(x => x.SendWelcomeAsync(
+                model.Email, 
+                $"{model.FirstName} {model.FamilyName}",
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
         }
 
         [Fact]
@@ -124,7 +136,7 @@ namespace Airline_Ticket_System.Tests
             };
 
             // Act
-            var result = await _controller.Login(model);
+            var result = await _controller.LoginAsync(model);
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -149,7 +161,7 @@ namespace Airline_Ticket_System.Tests
             _signInManagerMock.Setup(m => m.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false)).ReturnsAsync(signInResult);
 
             // Act
-            var result = await _controller.Login(model);
+            var result = await _controller.LoginAsync(model);
 
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
@@ -173,7 +185,7 @@ namespace Airline_Ticket_System.Tests
             _userManagerMock.Setup(m => m.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).ReturnsAsync(user);
 
             // Act
-            var result = await _controller.EditProfile();
+            var result = await _controller.EditProfileAsync();
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
@@ -191,7 +203,7 @@ namespace Airline_Ticket_System.Tests
             _userManagerMock.Setup(m => m.GetUserAsync(It.IsAny<System.Security.Claims.ClaimsPrincipal>())).ReturnsAsync((ApplicationUser)null);
 
             // Act
-            var result = await _controller.EditProfile();
+            var result = await _controller.EditProfileAsync();
 
             // Assert
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
@@ -231,7 +243,8 @@ namespace Airline_Ticket_System.Tests
                 _userManagerMock.Object,
                 _roleManagerMock.Object,
                 _signInManagerMock.Object,
-                _loggerMock.Object
+                _loggerMock.Object,
+                _emailServiceMock.Object
             );
 
             controller.TempData = new TempDataDictionary(
@@ -239,13 +252,105 @@ namespace Airline_Ticket_System.Tests
                 Mock.Of<ITempDataProvider>()
             );
 
-            var result = await controller.EditProfile(model);
+            var result = await controller.EditProfileAsync(model);
 
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
             Assert.Equal("EditProfile", redirectResult.ActionName);
 
             _userManagerMock.Verify(um => um.UpdateAsync(It.Is<ApplicationUser>(u =>
                 u.FirstName == "UpdatedFirst" && u.FamilyName == "UpdatedLast")), Times.Once);
+        }
+
+        [Fact]
+        public async Task RegisterOperator_Post_ValidModel_CreatesOperatorAndSendsEmail()
+        {
+            // Arrange
+            var model = new RegisterViewModel
+            {
+                Email = "operator@example.com",
+                Password = "Operator123!",
+                ConfirmPassword = "Operator123!",
+                FirstName = "Jane",
+                FamilyName = "Operator"
+            };
+
+            _userManagerMock.Setup(x => x.FindByEmailAsync(model.Email))
+                .ReturnsAsync((ApplicationUser)null);
+
+            _userManagerMock.Setup(x => x.CreateAsync(It.IsAny<ApplicationUser>(), model.Password))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _userManagerMock.Setup(x => x.AddToRoleAsync(It.IsAny<ApplicationUser>(), "Operator"))
+                .ReturnsAsync(IdentityResult.Success);
+
+            // Act
+            var result = await _controller.RegisterOperatorAsync(model);
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Users", redirectResult.ActionName);
+
+            // Verify that operator creation email was sent
+            _emailServiceMock.Verify(x => x.SendOperatorCreatedAsync(
+                model.Email, 
+                $"{model.FirstName} {model.FamilyName}",
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task ToggleUserStatus_ValidUser_SendsStatusChangeEmail()
+        {
+            // Arrange
+            var targetUser = new ApplicationUser
+            {
+                Id = "target123",
+                Email = "target@example.com",
+                FirstName = "Target",
+                FamilyName = "User",
+                IsActive = true
+            };
+
+            var currentUser = new ApplicationUser
+            {
+                Id = "current123",
+                Email = "admin@example.com",
+                FirstName = "Admin",
+                FamilyName = "User"
+            };
+
+            _userManagerMock.Setup(x => x.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(currentUser);
+
+            _userManagerMock.Setup(x => x.FindByIdAsync("target123"))
+                .ReturnsAsync(targetUser);
+
+            _userManagerMock.Setup(x => x.IsInRoleAsync(targetUser, "Admin"))
+                .ReturnsAsync(false);
+
+            _userManagerMock.Setup(x => x.UpdateAsync(It.IsAny<ApplicationUser>()))
+                .ReturnsAsync(IdentityResult.Success);
+
+            // Setup TempData
+            _controller.TempData = new TempDataDictionary(
+                new DefaultHttpContext(),
+                Mock.Of<ITempDataProvider>()
+            );
+
+            // Act
+            var result = await _controller.ToggleUserStatus("target123");
+
+            // Assert
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("Users", redirectResult.ActionName);
+
+            // Verify that status change email was sent (user was active, so now inactive)
+            _emailServiceMock.Verify(x => x.SendAccountActiveChangedAsync(
+                targetUser.Email,
+                $"{targetUser.FirstName} {targetUser.FamilyName}",
+                false, // Should be toggled from true to false
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
         }
 
         [Fact]
@@ -292,7 +397,7 @@ namespace Airline_Ticket_System.Tests
 
             await _context.SaveChangesAsync();
 
-            var result = await _controller.Users();
+            var result = await _controller.UsersAsync();
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<List<ApplicationUser>>(viewResult.Model);

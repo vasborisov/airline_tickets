@@ -1,33 +1,55 @@
 ﻿@model IEnumerable<Airline_Ticket_System.Entities.FlightPassenger>
 
-<h2>My Booked Flights</h2>
+<h1 class="page-title">My booked flights</h1>
+<p class="page-lead mb-3">Your reservations and cancellation options.</p>
+
+@if (TempData["BookingMessage"] != null)
+{
+    <div class="alert alert-success" role="status">@TempData["BookingMessage"]</div>
+}
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">You have not booked any flights.</div>
+    <div class="alert alert-info" role="status">You have not booked any flights.</div>
 }
 else
 {
-    <table class="table table-striped">
+    <div class="table-responsive">
+    <table class="table table-ats table-bordered table-striped mb-0">
         <thead>
             <tr>
+                <th>PNR</th>
                 <th>From → To</th>
                 <th>Passenger</th>
-                <th>Booked On</th>
+                <th>Booked</th>
+                <th>Status</th>
                 <th>Price</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
             @foreach (var booking in Model)
             {
                 <tr>
-                    <td>@booking.Flight.DepartureCity → @booking.Flight.ArrivalCity</td>
-                    <td>@($"{booking.Passenger.FirstName} {booking.Passenger.FamilyName}")</td>
+                    <td><a asp-action="ByPnr" asp-route-pnr="@booking.Pnr">@booking.Pnr</a></td>
+                    <td>@booking.Flight?.DepartureCity → @booking.Flight?.ArrivalCity</td>
+                    <td>@($"{booking.Passenger?.FirstName} {booking.Passenger?.FamilyName}")</td>
                     <td>@booking.CreatedAt.ToString("g")</td>
-                    <td>@booking.Flight.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</td>
+                    <td>@booking.BookingStatus</td>
+                    <td>@(booking.PaymentAmount?.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")) ?? booking.Flight?.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")))</td>
+                    <td>
+                        @if (booking.BookingStatus == "Confirmed")
+                        {
+                            <form asp-action="Cancel" method="post" class="d-inline" onsubmit="return confirm('Cancel this booking?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@booking.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                            </form>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
+    </div>
 }
-
