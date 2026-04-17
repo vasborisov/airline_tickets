@@ -36,7 +36,7 @@ else
                     <td>@($"{booking.Passenger?.FirstName} {booking.Passenger?.FamilyName}")</td>
                     <td>@booking.CreatedAt.ToString("g")</td>
                     <td>@booking.BookingStatus</td>
-                    <td>@(booking.PaymentAmount?.ToString("C") ?? booking.Flight?.Price.ToString("C"))</td>
+                    <td>@(booking.PaymentAmount?.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")) ?? booking.Flight?.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")))</td>
                     <td>
                         @if (booking.BookingStatus == "Confirmed")
                         {

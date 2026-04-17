@@ -1,5 +1,6 @@
 ﻿@{
     var isAdmin = User.IsInRole("Admin");
+    var isOperator = User.IsInRole("Operator");
     var isUser = User.IsInRole("User");
 }
 
@@ -34,6 +35,16 @@
                                     <a class="dropdown-item" asp-controller="Reports" asp-action="DailyFlights">Daily Flights</a>
                                     <a class="dropdown-item" asp-controller="Reports" asp-action="BookingStatistics">Statistics</a>
                                     <a class="dropdown-item" asp-controller="Reports" asp-action="Financial">Financial</a>
+                                </div>
+                            </li>
+                        }
+                        @if (isOperator)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-expanded="false">Reports</a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="DailyFlights">Daily Flights</a>
+                                    <a class="dropdown-item" asp-controller="Reports" asp-action="BookingStatistics">Booking Statistics</a>
                                 </div>
                             </li>
                         }

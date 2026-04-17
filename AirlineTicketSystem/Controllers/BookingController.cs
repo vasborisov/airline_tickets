@@ -50,20 +50,24 @@ namespace Airline_Ticket_System.Controllers
             };
 
             var currentUser = await _userManager.GetUserAsync(User);
+            
+            // Always provide the list of all registered users for selection
+            var allUsers = await _context.Users.Select(u => new SelectListItem
+            {
+                Value = u.Id.ToString(),
+                Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
+            }).ToListAsync();
+            model.ExistingPassengers = allUsers;
+            
+            // For User role, pre-populate their information for self-booking
             if (User.IsInRole("User") && currentUser != null)
             {
                 model.FirstName = currentUser.FirstName;
                 model.FamilyName = currentUser.FamilyName;
                 model.IsBookingForSelf = true;
             }
-            else {
-                var passengers = await _context.Passengers.Select(p => new SelectListItem
-                {
-                    Value = p.Id.ToString(),
-                    Text = $"{p.FirstName} {p.FamilyName}"
-                }).ToListAsync();
-
-                model.ExistingPassengers = passengers;
+            else 
+            {
                 model.IsBookingForSelf = false;
             }
 

@@ -29,7 +29,7 @@ namespace Airline_Ticket_System.Tests
                 PassengerId = 2,
                 FirstName = "Maria",
                 FamilyName = "Ivanova",
-                SelectedPassengerId = 3,
+                SelectedPassengerId = "3",
                 ExistingPassengers = new List<SelectListItem> { new SelectListItem { Text = "Test", Value = "1" } },
                 CreateNewPassenger = true,
                 IsBookingForSelf = true,
@@ -44,7 +44,7 @@ namespace Airline_Ticket_System.Tests
             Assert.Equal(2, model.PassengerId);
             Assert.Equal("Maria", model.FirstName);
             Assert.Equal("Ivanova", model.FamilyName);
-            Assert.Equal(3, model.SelectedPassengerId);
+            Assert.Equal("3", model.SelectedPassengerId);
             Assert.Single(model.ExistingPassengers);
             Assert.True(model.CreateNewPassenger);
             Assert.True(model.IsBookingForSelf);

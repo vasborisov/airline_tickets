@@ -84,38 +84,4 @@ else
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
-    @if (isAdmin)
-    {
-        <script>
-            (function () {
-                var form = document.getElementById('editFlightForm');
-                if (!form) return;
-                form.addEventListener('submit', function (e) {
-                    e.preventDefault();
-                    var formData = new FormData(form);
-                    fetch(form.action, {
-                        method: 'PATCH',
-                        body: formData,
-                        credentials: 'same-origin',
-                        redirect: 'manual'
-                    }).then(function (response) {
-                        if (response.status === 302 || response.status === 301) {
-                            var loc = response.headers.get('Location');
-                            if (loc) {
-                                window.location.href = loc;
-                            }
-                            return;
-                        }
-                        if (response.ok) {
-                            return response.text().then(function (html) {
-                                document.open();
-                                document.write(html);
-                                document.close();
-                            });
-                        }
-                    });
-                });
-            })();
-        </script>
-    }
 }

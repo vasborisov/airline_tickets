@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Airline_Ticket_System.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize]
 public class ReportsController : Controller
 {
     private readonly IReportService _reports;
@@ -15,6 +15,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Operator")]
     public async Task<IActionResult> DailyFlights(DateTime? day)
     {
         var d = day ?? DateTime.UtcNow.Date;
@@ -23,6 +24,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,Operator")]
     public async Task<IActionResult> BookingStatistics()
     {
         var model = await _reports.GetBookingStatisticsAsync();
@@ -30,6 +32,7 @@ public class ReportsController : Controller
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Financial(DateTime? from, DateTime? to)
     {
         DateTime? fromUtc = from.HasValue ? DateTime.SpecifyKind(from.Value.Date, DateTimeKind.Utc) : null;

@@ -16,7 +16,7 @@
             <dt class="col-sm-3">Departure (UTC)</dt>
             <dd class="col-sm-9">@Model.Flight?.DepartureDateTime.ToString("g")</dd>
             <dt class="col-sm-3">Fare</dt>
-            <dd class="col-sm-9">@(Model.PaymentAmount?.ToString("C") ?? Model.Flight?.Price.ToString("C"))</dd>
+            <dd class="col-sm-9">@(Model.PaymentAmount?.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")) ?? Model.Flight?.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR")))</dd>
             <dt class="col-sm-3">Payment</dt>
             <dd class="col-sm-9">@Model.PaymentStatus</dd>
         </dl>

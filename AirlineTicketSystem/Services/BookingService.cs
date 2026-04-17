@@ -65,13 +65,31 @@ public class BookingService : IBookingService
                 await _db.SaveChangesAsync(cancellationToken);
             }
         }
-        else if (model.SelectedPassengerId.HasValue)
+        else if (!string.IsNullOrEmpty(model.SelectedPassengerId))
         {
-            passenger = await _db.Passengers.FindAsync(new object[] { model.SelectedPassengerId.Value }, cancellationToken);
-            if (passenger == null)
+            // SelectedPassengerId now contains User ID, not Passenger ID
+            var selectedUser = await _db.Users.FindAsync(model.SelectedPassengerId);
+            if (selectedUser == null)
             {
                 await AttachPassengerDropdownAsync(model, flight, cancellationToken);
-                return BookingCommitResult.Fail("Selected passenger not found.", model);
+                return BookingCommitResult.Fail("Selected user not found.", model);
+            }
+
+            // Find or create passenger record for this user
+            var existingPassenger = await _db.Passengers
+                .FirstOrDefaultAsync(p =>
+                    p.FirstName.ToLower() == selectedUser.FirstName.Trim().ToLower() &&
+                    p.FamilyName.ToLower() == selectedUser.FamilyName.Trim().ToLower(), cancellationToken);
+
+            if (existingPassenger == null)
+            {
+                passenger = new Passenger(selectedUser.FirstName, selectedUser.FamilyName);
+                _db.Passengers.Add(passenger);
+                await _db.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                passenger = existingPassenger;
             }
         }
         else if (model.IsBookingForSelf)
@@ -270,11 +288,12 @@ public class BookingService : IBookingService
 
     private async Task AttachPassengerDropdownAsync(BookSeatViewModel model, Flight? flight, CancellationToken cancellationToken)
     {
-        model.ExistingPassengers = await _db.Passengers
-            .Select(p => new SelectListItem
+        // Get all registered users regardless of IsActive status or role
+        model.ExistingPassengers = await _db.Users
+            .Select(u => new SelectListItem
             {
-                Value = p.Id.ToString(),
-                Text = $"{p.FirstName} {p.FamilyName}"
+                Value = u.Id.ToString(),
+                Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
             })
             .ToListAsync(cancellationToken);
 

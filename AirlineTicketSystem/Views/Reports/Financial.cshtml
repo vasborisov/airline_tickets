@@ -28,19 +28,19 @@
     <div class="col-md-4">
         <div class="card ticket-card"><div class="card-body">
             <h2 class="h6 text-muted">Gross sales</h2>
-            <p class="h3 mb-0">@Model.GrossSales.ToString("C")</p>
+            <p class="h3 mb-0">@Model.GrossSales.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card ticket-card"><div class="card-body">
             <h2 class="h6 text-muted">Refunds</h2>
-            <p class="h3 mb-0">@Model.Refunds.ToString("C")</p>
+            <p class="h3 mb-0">@Model.Refunds.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
         </div></div>
     </div>
     <div class="col-md-4">
         <div class="card ticket-card"><div class="card-body">
             <h2 class="h6 text-muted">Net revenue</h2>
-            <p class="h3 mb-0">@Model.NetRevenue.ToString("C")</p>
+            <p class="h3 mb-0">@Model.NetRevenue.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
         </div></div>
     </div>
 </div>
@@ -67,7 +67,7 @@
                 <tr>
                     <td>@r.FlightNumber</td>
                     <td>@r.Route</td>
-                    <td>@r.Revenue.ToString("C")</td>
+                    <td>@r.Revenue.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</td>
                 </tr>
             }
         </tbody>

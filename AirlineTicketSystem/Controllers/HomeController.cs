@@ -8,6 +8,12 @@ namespace Airline_Ticket_System.Controllers
     {
         public IActionResult Index()
         {
+            // If user is logged in, redirect them to flights page
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Flight");
+            }
+            
             return View();
         }
 

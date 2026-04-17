@@ -221,13 +221,17 @@ namespace Airline_Ticket_System.Tests
             context.FlightPassengers.Add(booking);
             await context.SaveChangesAsync();
 
+            // Add the user to context so it can be found
+            context.Users.Add(user);
+            await context.SaveChangesAsync();
+
             var model = new BookSeatViewModel
             {
                 FlightId = flight.Id,
                 FirstName = "Ivan",
                 FamilyName = "Petrov",
                 CreateNewPassenger = false,
-                SelectedPassengerId = passenger.Id
+                SelectedPassengerId = user.Id
             };
 
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);

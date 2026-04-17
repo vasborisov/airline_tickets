@@ -138,7 +138,7 @@ namespace Airline_Ticket_System.Controllers
             return View(model);
         }
 
-        [HttpPatch]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
         [ActionName("Edit")]

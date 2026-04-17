@@ -110,7 +110,7 @@
                     <td>@flight.DepartureCity → @flight.ArrivalCity</td>
                     <td>@flight.DepartureDateTime.ToString("g")</td>
                     <td>@flight.Duration min</td>
-                    <td>@flight.Price.ToString("C")</td>
+                    <td>@flight.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</td>
                     <td>@flight.Capacity</td>
                     <td>
                         @if (!flight.IsFullyBooked && flight.Status != "Cancelled")
