@@ -49,6 +49,10 @@ namespace Airline_Ticket_System.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -107,6 +111,9 @@ namespace Airline_Ticket_System.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("ArrivalDateTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
@@ -114,14 +121,45 @@ namespace Airline_Ticket_System.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("DepartureDateTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<int>("Duration")
                         .HasColumnType("int");
+
+                    b.Property<string>("FlightNumber")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("Gate")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ArrivalCity")
+                        .HasDatabaseName("IX_Flights_ArrivalCity");
+
+                    b.HasIndex("DepartureCity")
+                        .HasDatabaseName("IX_Flights_DepartureCity");
+
+                    b.HasIndex("DepartureDateTime")
+                        .HasDatabaseName("IX_Flights_DepartureDateTime");
 
                     b.ToTable("Flights");
                 });
@@ -134,6 +172,14 @@ namespace Airline_Ticket_System.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BookingStatus")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -143,16 +189,43 @@ namespace Airline_Ticket_System.Migrations
                     b.Property<int>("FlightId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("PaymentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PaymentStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int>("PassengerId")
                         .HasColumnType("int");
 
+                    b.Property<string>("Pnr")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("nvarchar(6)");
+
+                    b.Property<decimal?>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_FlightPassengers_CreatedAt");
 
                     b.HasIndex("CreatedByUserId");
 
-                    b.HasIndex("FlightId");
-
                     b.HasIndex("PassengerId");
+
+                    b.HasIndex("Pnr")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FlightPassengers_Pnr_Unique");
+
+                    b.HasIndex("FlightId", "PassengerId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FlightPassengers_FlightId_PassengerId_Active_Unique")
+                        .HasFilter("[BookingStatus] = N'Confirmed'");
 
                     b.ToTable("FlightPassengers");
                 });

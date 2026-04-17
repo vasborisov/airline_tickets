@@ -10,43 +10,68 @@
 
 @if (isAdmin)
 {
-    <div class="container mt-4">
-        <div class="text-center mb-4">
-            @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
+    <h1 class="page-title">Users</h1>
+    <p class="page-lead mb-3">Accounts and roles. Operators can be added from here.</p>
 
-            <div class="mb-3 text-end">
-                <a class="btn btn-success" asp-area="" asp-controller="Account" asp-action="RegisterOperator">
-                    New Operator
-                </a>
-            </div>
+    @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
 
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+    }
 
-            <table class="table table-hover table-striped table-bordered shadow-sm">
-                <thead class="thead-light">
+    <div class="filter-bar d-flex flex-column flex-md-row justify-content-md-between align-items-md-center">
+        <span class="text-muted small mb-2 mb-md-0">Manage staff and review assignments. Toggle user status to enable/disable accounts.</span>
+        <a class="btn btn-success" asp-area="" asp-controller="Account" asp-action="RegisterOperator">New operator</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-ats table-bordered table-striped mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">User</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Role</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    var roles = await UserManager.GetRolesAsync(user);
+                    var roleNames = string.Join(", ", roles);
+
                     <tr>
-                        <th>User</th>
-                        <th>Email</th>
-                        <th>Role</th>
+                        <td>@($"{user.FirstName} {user.FamilyName}")</td>
+                        <td>@user.Email</td>
+                        <td>@roleNames</td>
+                        <td>
+                            <span class="badge @(user.IsActive ? "badge-success" : "badge-danger")">
+                                @(user.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </td>
+                        <td>
+                            <form asp-action="ToggleUserStatus" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-warning" : "btn-success")"
+                                        onclick="return confirm('@(user.IsActive ? "Disable" : "Enable") this user?');">
+                                    @(user.IsActive ? "Disable" : "Enable")
+                                </button>
+                            </form>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in Model)
-                    {
-                        var roles = await UserManager.GetRolesAsync(user);
-                        var roleNames = string.Join(", ", roles);
-
-                        <tr>
-                            <td>@($"{user.FirstName} {user.FamilyName}")</td>
-                            <td>@user.Email</td>
-                            <td>@roleNames</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                }
+            </tbody>
+        </table>
     </div>
 }
+
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 }
-

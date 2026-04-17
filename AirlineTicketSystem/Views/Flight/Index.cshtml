@@ -1,119 +1,178 @@
-﻿﻿@using Airline_Ticket_System.Models.Flight
-﻿@using Airline_Ticket_System.Data.Constants
-
-@model IEnumerable<FlightViewModel>
+﻿@using Airline_Ticket_System.Models.Flight
+@model FlightIndexPageViewModel
 @{
     var isAdmin = User.IsInRole("Admin");
     var isOperator = User.IsInRole("Operator");
-}
-
-@{
     ViewData["Title"] = "Flights";
+    var s = Model.Search;
 }
 
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-3">
+    <div>
+        <h1 class="page-title">Flights</h1>
+        <p class="page-lead mb-0">Search routes, filter by schedule and price, then book.</p>
+    </div>
+</div>
 
-    <h2>Flights</h2>
-    <form asp-controller="Flight">
-        <p>
-            Departure City: <input type="text" name="SearchDepartureCity" />
-            <input type="submit" value="Filter" asp-action="Index" method="get" />
-            <input type="submit" value="Reset" asp-action="Reset" />
-        </p>
-    </form>
+<form asp-controller="Flight" method="get" asp-action="Index" class="filter-bar mb-3">
+    <div class="form-row">
+        <div class="form-group col-md-3">
+            <label asp-for="Search.DepartureCity">Departure city</label>
+            <input class="form-control" name="DepartureCity" value="@s.DepartureCity" autocomplete="off" />
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Search.ArrivalCity">Arrival city</label>
+            <input class="form-control" name="ArrivalCity" value="@s.ArrivalCity" autocomplete="off" />
+        </div>
+        <div class="form-group col-md-2">
+            <label asp-for="Search.FromDate">From</label>
+            <input class="form-control" type="date" name="FromDate" value="@(s.FromDate?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="form-group col-md-2">
+            <label asp-for="Search.ToDate">To</label>
+            <input class="form-control" type="date" name="ToDate" value="@(s.ToDate?.ToString("yyyy-MM-dd"))" />
+        </div>
+        <div class="form-group col-md-2">
+            <label asp-for="Search.Status">Status</label>
+            <select class="form-control" name="Status">
+                <option value="">Any</option>
+                <option value="Scheduled" selected="@(s.Status == "Scheduled")">Scheduled</option>
+                <option value="Delayed" selected="@(s.Status == "Delayed")">Delayed</option>
+                <option value="Cancelled" selected="@(s.Status == "Cancelled")">Cancelled</option>
+                <option value="Boarding" selected="@(s.Status == "Boarding")">Boarding</option>
+                <option value="Departed" selected="@(s.Status == "Departed")">Departed</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-row align-items-end">
+        <div class="form-group col-md-2">
+            <label asp-for="Search.MinPrice">Min price</label>
+            <input class="form-control" type="number" step="0.01" name="MinPrice" value="@s.MinPrice" />
+        </div>
+        <div class="form-group col-md-2">
+            <label asp-for="Search.MaxPrice">Max price</label>
+            <input class="form-control" type="number" step="0.01" name="MaxPrice" value="@s.MaxPrice" />
+        </div>
+        <div class="form-group col-md-3">
+            <label asp-for="Search.SortBy">Sort</label>
+            <select class="form-control" name="SortBy">
+                <option value="departure" selected="@(s.SortBy == "departure")">Departure time</option>
+                <option value="price_asc" selected="@(s.SortBy == "price_asc")">Price ↑</option>
+                <option value="price_desc" selected="@(s.SortBy == "price_desc")">Price ↓</option>
+                <option value="duration" selected="@(s.SortBy == "duration")">Duration</option>
+                <option value="availability" selected="@(s.SortBy == "availability")">Seats left</option>
+                <option value="flightnumber" selected="@(s.SortBy == "flightnumber")">Flight number</option>
+            </select>
+        </div>
+        <div class="form-group col-md-1">
+            <label asp-for="Search.PageSize">Page size</label>
+            <input class="form-control" type="number" name="PageSize" value="@s.PageSize" min="1" max="100" />
+        </div>
+        <div class="form-group col-md-auto">
+            <input type="hidden" name="Page" value="1" />
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-outline-secondary" asp-controller="Flight" asp-action="Index">Reset</a>
+        </div>
+    </div>
+</form>
+
+<p class="text-muted small">@Model.TotalCount result(s) · Page @s.Page of @Model.TotalPages</p>
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger">
+    <div class="alert alert-danger" role="alert">
         @TempData["ErrorMessage"]
     </div>
 }
 
-    <table class="table">
+<div class="table-responsive">
+    <table class="table table-ats table-bordered mb-0">
         <thead>
             <tr>
-                <th>Number</th>
-                <th>Departure City</th>
-                <th>Arrival City</th>
+                <th>Flight</th>
+                <th>Route</th>
+                <th>Departure (UTC)</th>
                 <th>Duration</th>
                 <th>Price</th>
-                <th>Capacity</th>
-                <th>Is Full</th>
-
-                @if (isAdmin)
+                <th>Seats</th>
+                <th>Status</th>
+                @if (User.Identity?.IsAuthenticated ?? false)
                 {
-                <th>
-                    Actions</th>
+                    <th>Actions</th>
                 }
-</tr>
-</thead>
-
-<tbody>
-
-@foreach (var flight in Model)
-    {
-    <tr>
-        <th>@flight.Id</th>
-            <th>@flight.DepartureCity</th>
-            <th>@flight.ArrivalCity</th>
-            <th>@flight.Duration</th>
-            <th>@flight.Price</th>
-                <th>@flight.Capacity</th>
-             @if (!@flight.IsFullyBooked)
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var flight in Model.Flights)
             {
-            <th>not full</th>
-            }
-            else
-            {
-            <th class="full">full</th>
-            }
-
-             @if (User.Identity?.IsAuthenticated ?? false)
-            {
-            <th>
-                        @if (isAdmin || isOperator)
+                <tr>
+                    <td>@flight.FlightNumber</td>
+                    <td>@flight.DepartureCity → @flight.ArrivalCity</td>
+                    <td>@flight.DepartureDateTime.ToString("g")</td>
+                    <td>@flight.Duration min</td>
+                    <td>@flight.Price.ToString("C")</td>
+                    <td>@flight.Capacity</td>
+                    <td>
+                        @if (!flight.IsFullyBooked && flight.Status != "Cancelled")
                         {
-
-                            <a asp-controller="Flight"
-                               asp-action="Details"
-                               asp-route-id="@flight.Id">
-                                Details
-                            </a>
+                            <span class="badge badge-success">@flight.Status</span>
                         }
-                @if (!@flight.IsFullyBooked)
-                {
-                
-                    <a asp-controller="Booking"
-                       asp-action="Create"
-                       asp-route-id="@flight.Id">
-                        Book Seat
-                    </a>
-    
-                }
-
-                @if (isAdmin && !flight.PassengerViewModels.Any())
-                {
- 
-                <a asp-controller="Flight"
-                   asp-action="Edit"
-                   asp-route-id="@flight.Id">
-                    Edit
-                </a>
-            
-          
-                <a asp-controller="Flight"
-                   asp-action="Delete"
-                   asp-route-id="@flight.Id">
-                    Delete
-                </a>
-        
-                }
-                
-            </th>
+                        else if (flight.Status == "Cancelled")
+                        {
+                            <span class="badge badge-danger">Cancelled</span>
+                        }
+                        else
+                        {
+                            <span class="full">Full</span>
+                        }
+                    </td>
+                    @if (User.Identity?.IsAuthenticated ?? false)
+                    {
+                        <td>
+                            @if (isAdmin || isOperator)
+                            {
+                                <a asp-controller="Flight" asp-action="Details" asp-route-id="@flight.Id">Details</a>
+                            }
+                            @if (!flight.IsFullyBooked && flight.Status != "Cancelled")
+                            {
+                                <a asp-controller="Booking" asp-action="Create" asp-route-id="@flight.Id">Book</a>
+                            }
+                            @if (isAdmin && !(flight.PassengerViewModels?.Any() ?? false))
+                            {
+                                <a asp-controller="Flight" asp-action="Edit" asp-route-id="@flight.Id">Edit</a>
+                                <a asp-controller="Flight" asp-action="Delete" asp-route-id="@flight.Id">Delete</a>
+                            }
+                        </td>
+                    }
+                </tr>
             }
-    </tr>
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-3" aria-label="Flight pagination">
+        <ul class="pagination">
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                <li class="page-item @(p == s.Page ? "active" : "")">
+                    <a class="page-link" asp-controller="Flight" asp-action="Index"
+                       asp-route-DepartureCity="@s.DepartureCity"
+                       asp-route-ArrivalCity="@s.ArrivalCity"
+                       asp-route-FromDate="@s.FromDate"
+                       asp-route-ToDate="@s.ToDate"
+                       asp-route-MinPrice="@s.MinPrice"
+                       asp-route-MaxPrice="@s.MaxPrice"
+                       asp-route-Status="@s.Status"
+                       asp-route-SortBy="@s.SortBy"
+                       asp-route-PageSize="@s.PageSize"
+                       asp-route-Page="@p">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
 }
-</tbody>
-</table>
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")

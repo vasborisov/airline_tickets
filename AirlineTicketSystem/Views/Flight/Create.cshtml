@@ -1,55 +1,69 @@
 ﻿@model Airline_Ticket_System.Models.Flight.CreateFlightViewModel
 @{
     var isAdmin = User.IsInRole("Admin");
-}
-
-@{
-    ViewData["Title"] = "Create Flight";
+    ViewData["Title"] = "Create flight";
 }
 
 @if (isAdmin)
 {
-    <div class="container-form">
-        <h2>New Flight</h2>
+    <h1 class="page-title">New flight</h1>
+    <p class="page-lead mb-3">Add a route with schedule, price, and seat capacity.</p>
 
+    <div class="container-form">
         <form method="post" asp-controller="Flight" asp-action="Create">
             @Html.ValidationSummary(true, "", new { @class = "alert alert-danger" })
-            <div>
-                    <label asp-for="DepartureCity" class="control-label"></label>
-                    <input asp-for="DepartureCity" class="form-control" />
-                    <span asp-validation-for="DepartureCity" class="text-danger"></span>
+            <div class="form-group">
+                <label asp-for="DepartureCity" class="control-label"></label>
+                <input asp-for="DepartureCity" class="form-control" />
+                <span asp-validation-for="DepartureCity" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="ArrivalCity" class="control-label"></label>
                 <input type="text" asp-for="ArrivalCity" class="form-control" />
                 <span asp-validation-for="ArrivalCity" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
+                <label asp-for="FlightNumber"></label>
+                <input asp-for="FlightNumber" class="form-control" placeholder="e.g. BA123" />
+                <span asp-validation-for="FlightNumber" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DepartureDateTime"></label>
+                <input asp-for="DepartureDateTime" class="form-control" type="datetime-local" />
+                <span asp-validation-for="DepartureDateTime" class="text-danger"></span>
+            </div>
+            <div class="form-group">
                 <label asp-for="Duration">Duration</label>
                 <input asp-for="Duration" class="form-control" />
                 <span asp-validation-for="Duration" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="Price"></label>
                 <input asp-for="Price" class="form-control" />
                 <span asp-validation-for="Price" class="text-danger"></span>
             </div>
-            <div>
+            <div class="form-group">
                 <label asp-for="Capacity"></label>
                 <input type="number" asp-for="Capacity" class="form-control" />
                 <span asp-validation-for="Capacity" class="text-danger"></span>
             </div>
+            <div class="form-group">
+                <label asp-for="Gate"></label>
+                <input asp-for="Gate" class="form-control" />
+                <span asp-validation-for="Gate" class="text-danger"></span>
+            </div>
 
-            <button type="submit">Create</button>
-            <button asp-controller="Flight" asp-action="Index" id="cancelButton">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a asp-controller="Flight" asp-action="Index" class="btn btn-outline-secondary ml-2" id="cancelButton">Cancel</a>
         </form>
     </div>
 }
 else
 {
-    <h2 class="text-danger">
-        You can't accesss this page if you aren't logged in.
-    </h2>
+    <div class="message-panel message-panel--danger">
+        <h1 class="page-title text-danger">Access restricted</h1>
+        <p class="mb-0">You need administrator access to create flights.</p>
+    </div>
 }
 
 @section Scripts {

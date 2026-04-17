@@ -1,92 +1,218 @@
-﻿/* Gradient header with subtle glow */
-header {
-    background: linear-gradient(to right, #6a0dad, #8e44ad);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+﻿/* Airline ticket UI — extends Bootstrap 4; no motion/animation per product guidelines */
+
+.app-body {
+  min-height: 100vh;
 }
 
-/* Navigation with smooth animation */
-nav ul li a {
-    position: relative;
-    transition: all 0.3s ease;
+.app-header {
+  background-color: var(--ats-navy);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.2);
 }
 
-    nav ul li a::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: -5px;
-        width: 0;
-        height: 2px;
-        background: #fff;
-        transition: width 0.3s ease;
-    }
-
-    nav ul li a:hover::after {
-        width: 100%;
-    }
-
-/* Enhanced table rows */
-.table tbody tr {
-    transition: transform 0.2s ease;
+.app-navbar {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
 }
 
-    .table tbody tr:hover {
-        background-color: #f1f1f1;
-        transform: scale(1.01);
-    }
-
-/* Animated buttons */
-button, .btn, .btn-grey {
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+.app-navbar .navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #fff !important;
 }
 
-    button::before, .btn::before, .btn-grey::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 200%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        transition: left 0.5s;
-        z-index: 0;
-    }
-
-    button:hover::before, .btn:hover::before, .btn-grey:hover::before {
-        left: 0;
-    }
-
-/* Card animation enhancement */
-.card {
-    background-color: white;
-    border-radius: 10px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+.app-navbar .navbar-brand:hover,
+.app-navbar .navbar-brand:focus {
+  color: #e0e7ff !important;
 }
 
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
-    }
-
-input[type="text"]:focus,
-input[type="email"]:focus,
-input[type="password"]:focus,
-textarea:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #6a0dad55;
+.app-navbar .nav-link {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 500;
 }
 
-/* Responsive typography */
-@media screen and (max-width: 768px) {
-    h1, h2 {
-        font-size: 1.5rem;
-    }
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link:focus {
+  color: #fff !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
-    nav ul li {
-        display: block;
-        margin: 10px 0;
-    }
+.app-navbar .navbar-text {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.875rem;
+}
+
+.app-navbar .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.app-main {
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+.app-footer {
+  background-color: #fff;
+  color: var(--ats-muted);
+  font-size: 0.875rem;
+}
+
+.app-footer .container {
+  line-height: 1.6;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+/* Page shells */
+.page-hero {
+  background: var(--ats-surface);
+  border: 1px solid var(--ats-border);
+  border-radius: 8px;
+  padding: 2rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--ats-heading);
+  margin-bottom: 0.25rem;
+}
+
+.page-lead {
+  color: var(--ats-muted);
+  margin-bottom: 0;
+}
+
+/* Cards — ticket-style panel */
+.ticket-card,
+.card.ticket-card {
+  border: 1px solid var(--ats-border);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  background-color: var(--ats-surface);
+}
+
+.ticket-card .card-header {
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--ats-border);
+  font-weight: 600;
+  color: var(--ats-heading);
+}
+
+.login-card .card-header {
+  border-bottom: 1px solid var(--ats-border);
+  background: #f8fafc;
+}
+
+.login-card .page-title-login {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ats-heading);
+}
+
+/* Tables */
+.table-ats thead th {
+  background-color: #f1f5f9;
+  color: var(--ats-heading);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ats-border);
+}
+
+.table-ats tbody tr:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.table-ats tbody tr:hover {
+  background-color: #eff6ff;
+}
+
+.table-ats td,
+.table-ats th {
+  vertical-align: middle;
+}
+
+.table-ats .full {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.table-ats a {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+/* Filter / search strip */
+.filter-bar {
+  background: var(--ats-surface);
+  border: 1px solid var(--ats-border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+.filter-bar label {
+  font-weight: 500;
+  color: var(--ats-heading);
+  margin-bottom: 0.25rem;
+}
+
+/* Forms */
+.form-control:focus {
+  border-color: var(--ats-blue);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.2);
+}
+
+.container-form .form-control {
+  max-width: 32rem;
+}
+
+.container-form label {
+  font-weight: 500;
+  color: var(--ats-heading);
+}
+
+/* Home CTA */
+.home-cta .btn + .btn {
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 576px) {
+  .home-cta .btn + .btn {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Static / system messages (error, lockout, access denied) */
+.message-panel {
+  background: var(--ats-surface);
+  border: 1px solid var(--ats-border);
+  border-radius: 8px;
+  padding: 1.5rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.message-panel.message-panel--danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.message-panel h1,
+.message-panel .page-title {
+  margin-bottom: 0.75rem;
+}
+
+/* Definition lists inside ticket cards */
+.ticket-card dl.row dt {
+  color: var(--ats-muted);
+  font-weight: 500;
+}
+
+.ticket-card dl.row dd {
+  margin-bottom: 0.75rem;
 }

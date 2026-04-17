@@ -3,11 +3,15 @@ using Airline_Ticket_System.Data.Entities;
 using Airline_Ticket_System.Entities;
 using Airline_Ticket_System.Models.Booking;
 using Airline_Ticket_System.Repositories;
+using Airline_Ticket_System.Services;
+using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -21,15 +25,18 @@ namespace Airline_Ticket_System.Tests
     public class BookingControllerTests
     {
         private readonly Mock<UserManager<ApplicationUser>> _userManagerMock;
+        private readonly Mock<IEmailService> _emailServiceMock;
         private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
 
         public BookingControllerTests()
         {
             var userStore = new Mock<IUserStore<ApplicationUser>>();
             _userManagerMock = new Mock<UserManager<ApplicationUser>>(userStore.Object, null, null, null, null, null, null, null, null);
+            _emailServiceMock = new Mock<IEmailService>();
 
             _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: "BookingTestDb")
+                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
                 .Options;
         }
 
@@ -64,7 +71,7 @@ namespace Airline_Ticket_System.Tests
 
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new BookingController(context, _userManagerMock.Object);
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -77,7 +84,7 @@ namespace Airline_Ticket_System.Tests
                 }
             };
 
-            var result = await controller.Create(1);
+            var result = await controller.CreateAsync(1);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<BookSeatViewModel>(viewResult.Model);
@@ -98,6 +105,7 @@ namespace Airline_Ticket_System.Tests
             {
                 Id = "user123",
                 UserName = "test@example.com",
+                Email = "test@example.com",
                 FirstName = "Ivan", 
                 FamilyName = "Petrov"
             };
@@ -114,7 +122,7 @@ namespace Airline_Ticket_System.Tests
 
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new BookingController(context, _userManagerMock.Object);
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -126,11 +134,14 @@ namespace Airline_Ticket_System.Tests
                 }
             };
 
-            var result = await controller.Create(model);
+            // Initialize TempData
+            controller.TempData = new TempDataDictionary(controller.ControllerContext.HttpContext, Mock.Of<ITempDataProvider>());
+
+            var result = await controller.CreateAsync(model);
 
             var redirectResult = Assert.IsType<RedirectToActionResult>(result);
-            Assert.Equal("Index", redirectResult.ActionName);
-            Assert.Equal("Flight", redirectResult.ControllerName);
+            Assert.Equal("MyBooked", redirectResult.ActionName);
+            Assert.Equal("Booking", redirectResult.ControllerName);
 
             var booking = await context.FlightPassengers.FirstOrDefaultAsync();
             Assert.NotNull(booking);
@@ -138,6 +149,15 @@ namespace Airline_Ticket_System.Tests
 
             var passenger = await context.Passengers.FirstOrDefaultAsync(p => p.FirstName == "Ivan" && p.FamilyName == "Petrov");
             Assert.NotNull(passenger);
+
+            // Verify that booking confirmation email was sent
+            _emailServiceMock.Verify(x => x.SendBookingConfirmationAsync(
+                user.Email,
+                It.IsAny<string>(), // PNR
+                It.IsAny<Flight>(),
+                It.IsAny<Passenger>(),
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
         }
 
 
@@ -163,9 +183,9 @@ namespace Airline_Ticket_System.Tests
 
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new BookingController(context, _userManagerMock.Object);
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
 
-            var result = await controller.Create(model);
+            var result = await controller.CreateAsync(model);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Equal("A flight with the provided id does not exist", controller.ModelState[""].Errors[0].ErrorMessage);
@@ -212,9 +232,9 @@ namespace Airline_Ticket_System.Tests
 
             _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
 
-            var controller = new BookingController(context, _userManagerMock.Object);
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
 
-            var result = await controller.Create(model);
+            var result = await controller.CreateAsync(model);
 
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.Equal("This passenger has already booked this flight.", controller.ModelState[""].Errors[0].ErrorMessage);
@@ -255,7 +275,7 @@ namespace Airline_Ticket_System.Tests
 
             _userManagerMock.Setup(um => um.GetUserId(It.IsAny<ClaimsPrincipal>())).Returns(user.Id);
 
-            var controller = new BookingController(context, _userManagerMock.Object);
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
             controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext
@@ -267,12 +287,76 @@ namespace Airline_Ticket_System.Tests
                 }
             };
 
-            var result = await controller.MyBooked();
+            var result = await controller.MyBookedAsync();
 
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<List<FlightPassenger>>(viewResult.Model);
             Assert.Single(model);
             Assert.Equal(user.Id, model[0].CreatedByUserId);
+        }
+
+        [Fact]
+        public async Task Cancel_ValidBooking_SendsCancellationEmail()
+        {
+            var context = new ApplicationDbContext(_dbContextOptions);
+            await ClearDatabaseAsync(context);
+
+            var user = new ApplicationUser
+            {
+                Id = "user123",
+                UserName = "test@example.com",
+                Email = "test@example.com",
+                FirstName = "Test",
+                FamilyName = "User"
+            };
+            context.Users.Add(user);
+
+            var flight = new Flight(1, "Sofia", "London", 180, 199.99m, 100);
+            context.Flights.Add(flight);
+
+            var passenger = new Passenger("Ivan", "Petrov");
+            context.Passengers.Add(passenger);
+
+            var booking = new FlightPassenger
+            {
+                FlightId = flight.Id,
+                PassengerId = passenger.Id,
+                CreatedByUserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                BookingStatus = "Confirmed",
+                Pnr = "ABC123",
+                PaymentAmount = 199.99m
+            };
+            context.FlightPassengers.Add(booking);
+            await context.SaveChangesAsync();
+
+            _userManagerMock.Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>())).ReturnsAsync(user);
+
+            var controller = new BookingController(context, _userManagerMock.Object, new BookingService(context), _emailServiceMock.Object);
+            controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity(new Claim[]
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id)
+                    }))
+                }
+            };
+            controller.TempData = new TempDataDictionary(controller.ControllerContext.HttpContext, Mock.Of<ITempDataProvider>());
+
+            var result = await controller.CancelAsync(booking.Id);
+
+            var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal("MyBooked", redirectResult.ActionName);
+
+            // Verify that booking cancellation email was sent
+            _emailServiceMock.Verify(x => x.SendBookingCancelledAsync(
+                user.Email,
+                "ABC123",
+                It.IsAny<decimal?>(),
+                It.IsAny<CancellationToken>()), 
+                Times.Once);
         }
 
     }

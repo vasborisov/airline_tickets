@@ -1,0 +1,52 @@
+@model Airline_Ticket_System.Models.Reports.DailyFlightsReportViewModel
+@{
+    ViewData["Title"] = "Daily flights";
+}
+
+<h1 class="page-title">Daily flights</h1>
+<p class="page-lead mb-3">Scheduled departures for the selected UTC day.</p>
+
+<form method="get" class="filter-bar mb-3">
+    <div class="form-row align-items-end">
+        <div class="form-group col-md-4 mb-0">
+            <label for="day">Date (UTC)</label>
+            <input class="form-control" type="date" id="day" name="day" value="@Model.DayUtc.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="form-group col-md-auto mb-0">
+            <button type="submit" class="btn btn-primary">Load</button>
+        </div>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-ats table-bordered mb-0">
+        <thead>
+            <tr>
+                <th>Flight</th>
+                <th>Route</th>
+                <th>Departure (UTC)</th>
+                <th>Status</th>
+                <th>Booked</th>
+                <th>Total seats</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Model.Flights)
+            {
+                <tr>
+                    <td>@r.FlightNumber</td>
+                    <td>@r.DepartureCity → @r.ArrivalCity</td>
+                    <td>@r.DepartureDateTime.ToString("g")</td>
+                    <td>@r.Status</td>
+                    <td>@r.BookedSeats</td>
+                    <td>@r.TotalSeats</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (!Model.Flights.Any())
+{
+    <p class="text-muted mt-3">No flights on this day.</p>
+}

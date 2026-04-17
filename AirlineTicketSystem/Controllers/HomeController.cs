@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Diagnostics;
+using Airline_Ticket_System.Models;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Airline_Ticket_System.Controllers
 {
@@ -7,6 +9,15 @@ namespace Airline_Ticket_System.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View("~/Views/Shared/Error.cshtml", new ErrorViewModel
+            {
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            });
         }
     }
 }

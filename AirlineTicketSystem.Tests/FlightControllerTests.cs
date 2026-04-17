@@ -2,6 +2,7 @@
 using Moq;
 using Airline_Ticket_System.Controllers;
 using Airline_Ticket_System.Services.Interfaces;
+using Airline_Ticket_System.Data.Entities;
 using Airline_Ticket_System.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -10,25 +11,36 @@ using System.Linq;
 using Airline_Ticket_System.Models.Flight;
 using Airline_Ticket_System.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Airline_Ticket_System.Repositories.Models;
+using System.Threading;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Http;
+using System;
 
 namespace Airline_Ticket_System.Tests;
 public class FlightControllerTests
 {
     private readonly DbContextOptions<ApplicationDbContext> _options;
+    private readonly Mock<IEmailService> _emailServiceMock;
+    private readonly Mock<ILogger<FlightController>> _loggerMock;
 
     public FlightControllerTests()
     {
         _options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
+        
+        _emailServiceMock = new Mock<IEmailService>();
+        _loggerMock = new Mock<ILogger<FlightController>>();
     }
 
     [Fact]
-    public async Task CreateAsync_ValidModel_AddsFlight_AndRedirects()
+    public async Task Create_Post_ValidModel_AddsFlight_AndRedirects()
     {
         using var context = new ApplicationDbContext(_options);
         var mockService = new Mock<IFlightService>();
-        var controller = new FlightController(context, mockService.Object);
+        var controller = new FlightController(context, mockService.Object, _emailServiceMock.Object, _loggerMock.Object);
 
         var model = new CreateFlightViewModel
         {
@@ -44,7 +56,7 @@ public class FlightControllerTests
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirect.ActionName);
-        mockService.Verify(s => s.AddFlight(It.IsAny<Flight>()), Times.Once);
+        mockService.Verify(s => s.AddFlightAsync(It.IsAny<Flight>()), Times.Once);
     }
 
     [Fact]
@@ -55,12 +67,12 @@ public class FlightControllerTests
         context.Flights.Add(flight);
         await context.SaveChangesAsync();
 
-        var controller = new FlightController(context, Mock.Of<IFlightService>());
+        var controller = new FlightController(context, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
 
-        var result = await controller.Edit(2);
+        var result = await controller.EditAsync(2);
 
         var view = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsType<FlightViewModel>(view.Model);
+        var model = Assert.IsType<EditFlightViewModel>(view.Model);
         Assert.Equal("Paris", model.DepartureCity);
     }
 
@@ -68,10 +80,18 @@ public class FlightControllerTests
     public async Task Edit_Post_ValidModel_UpdatesFlight_AndRedirects()
     {
         using var context = new ApplicationDbContext(_options);
-        context.Flights.Add(new Flight(3, "Madrid", "Lisbon", 80, 120.00M, 25));
+        var flight = new Flight(3, "Madrid", "Lisbon", 80, 120.00M, 25)
+        {
+            FlightNumber = "FL003",
+            DepartureDateTime = DateTime.UtcNow.AddDays(1),
+            ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddMinutes(80),
+            Status = "Scheduled"
+        };
+        context.Flights.Add(flight);
         await context.SaveChangesAsync();
 
-        var controller = new FlightController(context, Mock.Of<IFlightService>());
+        var controller = new FlightController(context, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
+        controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
 
         var editModel = new EditFlightViewModel
         {
@@ -80,10 +100,14 @@ public class FlightControllerTests
             ArrivalCity = "Lisbon",
             Duration = 85,
             Price = 130.00M,
-            Capacity = 30
+            Capacity = 30,
+            FlightNumber = "FL003",
+            DepartureDateTime = DateTime.UtcNow.AddDays(1),
+            ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddMinutes(85),
+            Status = "Scheduled"
         };
 
-        var result = await controller.Edit(editModel);
+        var result = await controller.EditAsync(editModel);
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirect.ActionName);
@@ -101,9 +125,9 @@ public class FlightControllerTests
         context.Flights.Add(flight);
         await context.SaveChangesAsync();
 
-        var controller = new FlightController(context, Mock.Of<IFlightService>());
+        var controller = new FlightController(context, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
 
-        var result = await controller.Details(4);
+        var result = await controller.DetailsAsync(4);
 
         var view = Assert.IsType<ViewResult>(result);
         var model = Assert.IsType<FlightViewModel>(view.Model);
@@ -121,9 +145,9 @@ public class FlightControllerTests
         var mockService = new Mock<IFlightService>();
         mockService.Setup(s => s.DeleteFlightAsync(It.IsAny<Flight>())).Returns(Task.CompletedTask);
 
-        var controller = new FlightController(context, mockService.Object);
+        var controller = new FlightController(context, mockService.Object, _emailServiceMock.Object, _loggerMock.Object);
 
-        var result = await controller.Delete(5);
+        var result = await controller.DeleteAsync(5);
 
         var redirect = Assert.IsType<RedirectToActionResult>(result);
         Assert.Equal("Index", redirect.ActionName);
@@ -135,7 +159,10 @@ public class FlightControllerTests
     {
         // Arrange
         var mockService = new Mock<IFlightService>();
-        var departureCityFilter = "Sofia";
+        var searchViewModel = new FlightSearchViewModel
+        {
+            DepartureCity = "Sofia"
+        };
 
         var flights = new List<Flight>
         {
@@ -147,20 +174,187 @@ public class FlightControllerTests
         flights[0].FlightPassengers = new List<FlightPassenger>();
         flights[1].FlightPassengers = new List<FlightPassenger>();
 
-        mockService.Setup(s => s.LoadAllFlightsAsync())
-                   .ReturnsAsync(flights);
+        mockService.Setup(s => s.SearchFlightsAsync(It.Is<FlightSearchCriteria>(c => c.DepartureCity == "Sofia"), It.IsAny<CancellationToken>()))
+                   .ReturnsAsync((new List<Flight> { flights[0] }.AsReadOnly(), 1));
+        
+        mockService.Setup(s => s.SearchFlightsAsync(It.Is<FlightSearchCriteria>(c => c.DepartureCity != "Sofia"), It.IsAny<CancellationToken>()))
+                   .ReturnsAsync((flights.AsReadOnly(), flights.Count));
 
-        var controller = new FlightController(null, mockService.Object);
+        var controller = new FlightController(null, mockService.Object, _emailServiceMock.Object, _loggerMock.Object);
 
         // Act
-        var result = await controller.Index(departureCityFilter);
+        var result = await controller.IndexAsync(searchViewModel);
 
         // Assert
         var viewResult = Assert.IsType<ViewResult>(result);
-        var model = Assert.IsAssignableFrom<List<Airline_Ticket_System.Models.Flight.FlightViewModel>>(viewResult.Model);
+        var model = Assert.IsAssignableFrom<FlightIndexPageViewModel>(viewResult.Model);
 
-        Assert.Single(model); // само един с "Sofia"
-        Assert.Equal("Sofia", model[0].DepartureCity);
+        Assert.Single(model.Flights); // само един с "Sofia"
+        Assert.Equal("Sofia", model.Flights[0].DepartureCity);
+    }
+
+    [Fact]
+    public void BookSeat_Redirects_To_Booking_Create_With_FlightId()
+    {
+        var controller = new FlightController(null!, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
+
+        var result = controller.BookSeat(7);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Create", redirect.ActionName);
+        Assert.Equal("Booking", redirect.ControllerName);
+        Assert.NotNull(redirect.RouteValues);
+        Assert.Equal(7, redirect.RouteValues["id"]);
+    }
+
+    [Fact]
+    public async Task Edit_Post_FlightWithPassengers_WithScheduleChange_SendsNotificationEmails()
+    {
+        using var context = new ApplicationDbContext(_options);
+        
+        // Create flight with passengers
+        var flight = new Flight(10, "Vienna", "Prague", 120, 200.00m, 50)
+        {
+            DepartureDateTime = DateTime.UtcNow.AddDays(1),
+            ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddHours(2),
+            Status = "Scheduled",
+            Gate = "A1"
+        };
+        context.Flights.Add(flight);
+
+        var passenger = new Passenger("Maria", "Petrova");
+        context.Passengers.Add(passenger);
+
+        // Create ApplicationUser for the booking
+        var user = new ApplicationUser
+        {
+            Id = "user-maria",
+            UserName = "maria@example.com",
+            Email = "maria@example.com",
+            FirstName = "Maria",
+            FamilyName = "Petrova"
+        };
+        context.Users.Add(user);
+
+        var booking = new FlightPassenger
+        {
+            FlightId = flight.Id,
+            PassengerId = passenger.Id,
+            BookingStatus = "Confirmed",
+            Pnr = "XYZ789",
+            CreatedAt = DateTime.UtcNow,
+            CreatedByUserId = user.Id,
+            CreatedByUser = user
+        };
+        context.FlightPassengers.Add(booking);
+
+        await context.SaveChangesAsync();
+
+        var controller = new FlightController(context, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
+        controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+        var editModel = new EditFlightViewModel
+        {
+            Id = 10,
+            DepartureCity = "Vienna",
+            ArrivalCity = "Prague", 
+            Duration = 120,
+            Price = 200.00m,
+            Capacity = 50,
+            FlightNumber = "AT0010",
+            DepartureDateTime = DateTime.UtcNow.AddDays(1).AddHours(1), // Changed time
+            ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddHours(3),    // Changed time
+            Status = "Delayed", // Changed status
+            Gate = "B2" // Changed gate
+        };
+
+        var result = await controller.EditAsync(editModel);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+
+        // Verify that flight schedule change email was sent to the passenger
+        _emailServiceMock.Verify(x => x.SendFlightScheduleChangedAsync(
+            "maria@example.com",
+            It.Is<Flight>(f => f.Id == 10 && f.Status == "Delayed"),
+            It.IsAny<CancellationToken>()), 
+            Times.Once);
+
+        // Verify success message includes notification count
+        Assert.Contains("Notifications sent to 1 passengers", controller.TempData["SuccessMessage"].ToString());
+    }
+
+    [Fact]
+    public async Task Edit_Post_FlightWithoutScheduleChange_DoesNotSendEmails()
+    {
+        using var context = new ApplicationDbContext(_options);
+        
+        var flight = new Flight(11, "Berlin", "Munich", 90, 150.00m, 40)
+        {
+            DepartureDateTime = DateTime.UtcNow.AddDays(2),
+            ArrivalDateTime = DateTime.UtcNow.AddDays(2).AddHours(1.5),
+            Status = "Scheduled",
+            Gate = "C3",
+            FlightNumber = "AT0011"
+        };
+        context.Flights.Add(flight);
+
+        var passenger = new Passenger("Hans", "Mueller");
+        context.Passengers.Add(passenger);
+
+        // Create ApplicationUser for the booking (even though no email will be sent)
+        var user = new ApplicationUser
+        {
+            Id = "user-hans",
+            UserName = "hans@example.com",
+            Email = "hans@example.com",
+            FirstName = "Hans",
+            FamilyName = "Mueller"
+        };
+        context.Users.Add(user);
+
+        var booking = new FlightPassenger
+        {
+            FlightId = flight.Id,
+            PassengerId = passenger.Id,
+            BookingStatus = "Confirmed",
+            Pnr = "DEF456",
+            CreatedByUserId = user.Id,
+            CreatedByUser = user
+        };
+        context.FlightPassengers.Add(booking);
+
+        await context.SaveChangesAsync();
+
+        var controller = new FlightController(context, Mock.Of<IFlightService>(), _emailServiceMock.Object, _loggerMock.Object);
+        controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+        var editModel = new EditFlightViewModel
+        {
+            Id = 11,
+            DepartureCity = "Berlin",  // Same city
+            ArrivalCity = "Munich",    // Same city
+            Duration = 90,             // Same duration 
+            Price = 150.00m,           // Same price
+            Capacity = 40,             // Same capacity
+            FlightNumber = "AT0011",   // Same flight number
+            DepartureDateTime = flight.DepartureDateTime, // Same time
+            ArrivalDateTime = flight.ArrivalDateTime,     // Same time
+            Status = "Scheduled",      // Same status
+            Gate = "C3"               // Same gate
+        };
+
+        var result = await controller.EditAsync(editModel);
+
+        var redirect = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Index", redirect.ActionName);
+
+        // Verify that NO email was sent (no schedule change)
+        _emailServiceMock.Verify(x => x.SendFlightScheduleChangedAsync(
+            It.IsAny<string>(),
+            It.IsAny<Flight>(),
+            It.IsAny<CancellationToken>()), 
+            Times.Never);
     }
 
 }

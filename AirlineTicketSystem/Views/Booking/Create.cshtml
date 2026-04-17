@@ -3,11 +3,13 @@
     var isUser = User.IsInRole("User");
 }
 
-<h2>Book Seat</h2>
+<h1 class="page-title">Book a seat</h1>
+<p class="page-lead mb-3">Confirm flight details and passenger information.</p>
 
-<div class="card mb-3">
+<div class="card ticket-card mb-3">
+    <div class="card-header">Itinerary</div>
     <div class="card-body">
-        <h5 class="card-title">@Model.DepartureCity → @Model.ArrivalCity</h5>
+        <h2 class="h5 card-title mb-3">@Model.DepartureCity → @Model.ArrivalCity</h2>
         <p><strong>Duration:</strong> @Model.Duration minutes</p>
         <p><strong>Price:</strong> @Model.Price.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</p>
     </div>
@@ -53,10 +55,8 @@
         </div>
     </div>
 
-    <button type="submit" class="btn btn-primary">Book Seat</button>
-    <a asp-action="Index" asp-controller="Flight" class="btn btn-secondary">
-        <i class="fas fa-list"></i>Cancel
-    </a>
+    <button type="submit" class="btn btn-primary">Book seat</button>
+    <a asp-action="Index" asp-controller="Flight" class="btn btn-outline-secondary ml-2">Cancel</a>
 </form>
 
 @section Scripts {
