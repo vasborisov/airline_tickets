@@ -190,8 +190,10 @@ namespace Airline_Ticket_System.Controllers
                                   flight.Status != model.Status ||
                                   flight.Gate != model.Gate?.Trim();
 
-            // Store passengers to notify before updating flight
+            // Store passengers to notify and original departure time before updating flight
             var passengersToNotify = new List<(string Email, Passenger Passenger)>();
+            var originalDepartureTime = flight.DepartureDateTime;
+            
             if (hasScheduleChange && flight.FlightPassengers != null)
             {
                 passengersToNotify = flight.FlightPassengers
@@ -224,7 +226,7 @@ namespace Airline_Ticket_System.Controllers
                 {
                     try
                     {
-                        await _emailService.SendFlightScheduleChangedAsync(email, flight);
+                        await _emailService.SendFlightScheduleChangedAsync(email, flight, originalDepartureTime);
                     }
                     catch (Exception ex)
                     {

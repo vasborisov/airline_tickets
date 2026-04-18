@@ -1,4 +1,5 @@
 ﻿using Airline_Ticket_System.Data.Entities;
+using Airline_Ticket_System.Entities;
 using Airline_Ticket_System.Models.Booking;
 using Airline_Ticket_System.Repositories;
 using Airline_Ticket_System.Services.Interfaces;
