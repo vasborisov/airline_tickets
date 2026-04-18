@@ -17,17 +17,20 @@ namespace Airline_Ticket_System.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IBookingService _bookingService;
         private readonly IEmailService _emailService;
+        private readonly ILogger<BookingController> _logger;
 
         public BookingController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
             IBookingService bookingService,
-            IEmailService emailService)
+            IEmailService emailService,
+            ILogger<BookingController> logger)
         {
             _context = context;
             _userManager = userManager;
             _bookingService = bookingService;
             _emailService = emailService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -126,8 +129,21 @@ namespace Airline_Ticket_System.Controllers
                         
                         if (!string.IsNullOrEmpty(emailToSend))
                         {
-                            await _emailService.SendBookingConfirmationAsync(
-                                emailToSend, outcome.Pnr, fp.Flight, fp.Passenger);
+                            try
+                            {
+                                await _emailService.SendBookingConfirmationAsync(
+                                    emailToSend, outcome.Pnr, fp.Flight, fp.Passenger);
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log the email failure but don't let it break the booking process
+                                // The booking was successful, so we continue with the success flow
+                                _logger.LogError(ex, "Failed to send booking confirmation email to {Email} for PNR {PNR}", 
+                                    emailToSend, outcome.Pnr);
+                                
+                                // Add a user-friendly message that booking succeeded but email failed
+                                TempData["EmailWarning"] = "Booking confirmed successfully, but we couldn't send the confirmation email. Please save your PNR number.";
+                            }
                         }
                     }
                 }
@@ -135,7 +151,18 @@ namespace Airline_Ticket_System.Controllers
                 TempData["BookingMessage"] = string.IsNullOrEmpty(outcome.Pnr)
                     ? "Booking completed."
                     : $"Booking confirmed. PNR: {outcome.Pnr}";
-                return RedirectToAction("MyBooked", "Booking");
+
+                // Redirect based on user role
+                if (User.IsInRole("Admin") || User.IsInRole("Operator"))
+                {
+                    // Admin and Operator redirect back to flights list to continue working
+                    return RedirectToAction("Index", "Flight");
+                }
+                else
+                {
+                    // Regular users go to their bookings page
+                    return RedirectToAction("MyBooked", "Booking");
+                }
             }
 
             if (!string.IsNullOrEmpty(outcome.ErrorKey))
@@ -174,7 +201,30 @@ namespace Airline_Ticket_System.Controllers
             var result = await _bookingService.TryCancelBookingAsync(id, User, user);
             if (result.Success && user?.Email != null && !string.IsNullOrEmpty(result.Pnr))
             {
-                await _emailService.SendBookingCancelledAsync(user.Email, result.Pnr, result.RefundAmount);
+                try
+                {
+                    // Load flight details for the cancellation email
+                    Flight? flight = null;
+                    var flightPassenger = await _context.FlightPassengers
+                        .Include(fp => fp.Flight)
+                        .FirstOrDefaultAsync(fp => fp.Pnr == result.Pnr);
+                    
+                    if (flightPassenger?.Flight != null)
+                    {
+                        flight = flightPassenger.Flight;
+                    }
+                    
+                    await _emailService.SendBookingCancelledAsync(user.Email, result.Pnr, result.RefundAmount, flight);
+                }
+                catch (Exception ex)
+                {
+                    // Log the email failure but don't let it break the cancellation process
+                    _logger.LogError(ex, "Failed to send booking cancellation email to {Email} for PNR {PNR}", 
+                        user.Email, result.Pnr);
+                    
+                    // Add a user-friendly message that cancellation succeeded but email failed
+                    TempData["EmailWarning"] = "Booking cancelled successfully, but we couldn't send the cancellation email.";
+                }
             }
 
             TempData["BookingMessage"] = result.Success

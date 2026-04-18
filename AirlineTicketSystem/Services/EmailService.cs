@@ -104,7 +104,7 @@ public class EmailService : IEmailService
             Passenger = passenger,
             PaymentAmount = (decimal?)null,
             PaymentStatus = "Confirmed",
-            BookingDetailsUrl = GetBaseUrl() + $"/Booking/Details/{pnr}"
+            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={pnr}"
         };
 
         await SendEmailAsync(
@@ -116,13 +116,13 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
-    public async Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, CancellationToken cancellationToken = default)
+    public async Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, Flight? flight = null, CancellationToken cancellationToken = default)
     {
         var model = new
         {
             PNR = pnr,
             RefundAmount = refundAmount,
-            Flight = (Flight?)null, // TODO: Get flight details from context
+            Flight = flight
             NewBookingUrl = GetBaseUrl() + "/Flight"
         };
 

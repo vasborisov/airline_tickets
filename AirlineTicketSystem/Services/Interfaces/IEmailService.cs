@@ -13,7 +13,7 @@ public interface IEmailService
 
     Task SendBookingConfirmationAsync(string toEmail, string pnr, Flight flight, Passenger passenger, CancellationToken cancellationToken = default);
 
-    Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, CancellationToken cancellationToken = default);
+    Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, Flight? flight = null, CancellationToken cancellationToken = default);
 
     Task SendFlightScheduleChangedAsync(string toEmail, Flight flight, CancellationToken cancellationToken = default);
 

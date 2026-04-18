@@ -141,6 +141,53 @@ namespace Airline_Ticket_System.Tests
         }
 
         [Fact]
+        public async Task SendBookingConfirmationAsync_GeneratesCorrectByPnrUrl()
+        {
+            // Arrange
+            var emailService = new EmailService(_emailSettings, _loggerMock.Object, _serviceProviderMock.Object, _environmentMock.Object);
+            
+            var flight = new Flight
+            {
+                Id = 1,
+                FlightNumber = "AT0001",
+                DepartureCity = "Sofia", 
+                ArrivalCity = "London",
+                DepartureDateTime = DateTime.UtcNow.AddDays(1),
+                ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddHours(3),
+                Duration = 180,
+                Price = 199.99m
+            };
+
+            var passenger = new Passenger("John", "Traveler")
+            {
+                Id = 1
+            };
+
+            // Act
+            await emailService.SendBookingConfirmationAsync("john@example.com", "TEST123", flight, passenger);
+
+            // Assert - Verify the logged email content contains the correct ByPnr URL format
+            _loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("/Booking/ByPnr?pnr=TEST123")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+
+            // Ensure the old incorrect URL format is NOT present
+            _loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("/Booking/Details/TEST123")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Never);
+        }
+
+        [Fact]
         public async Task SendBookingCancelledAsync_DevelopmentMode_LogsEmail()
         {
             // Arrange
@@ -155,6 +202,48 @@ namespace Airline_Ticket_System.Tests
                     LogLevel.Information,
                     It.IsAny<EventId>(),
                     It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("DEVELOPMENT EMAIL to user@example.com")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task SendBookingCancelledAsync_WithFlightDetails_IncludesFlightInfo()
+        {
+            // Arrange
+            var emailService = new EmailService(_emailSettings, _loggerMock.Object, _serviceProviderMock.Object, _environmentMock.Object);
+            
+            var flight = new Flight
+            {
+                Id = 1,
+                FlightNumber = "AT0001",
+                DepartureCity = "Sofia",
+                ArrivalCity = "London", 
+                DepartureDateTime = DateTime.UtcNow.AddDays(1),
+                ArrivalDateTime = DateTime.UtcNow.AddDays(1).AddHours(3),
+                Duration = 180,
+                Price = 199.99m
+            };
+
+            // Act
+            await emailService.SendBookingCancelledAsync("user@example.com", "XYZ789", 150.00m, flight);
+
+            // Assert - Verify email was logged
+            _loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("DEVELOPMENT EMAIL to user@example.com")),
+                    It.IsAny<Exception>(),
+                    It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                Times.Once);
+
+            // Verify flight information is included in the email content  
+            _loggerMock.Verify(
+                x => x.Log(
+                    LogLevel.Information,
+                    It.IsAny<EventId>(),
+                    It.Is<It.IsAnyType>((v, t) => v.ToString().Contains("AT0001") && v.ToString().Contains("Sofia") && v.ToString().Contains("London")),
                     It.IsAny<Exception>(),
                     It.IsAny<Func<It.IsAnyType, Exception, string>>()),
                 Times.Once);
