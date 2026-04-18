@@ -1,5 +1,4 @@
 using Airline_Ticket_System.Configurations;
-using Airline_Ticket_System.Data.Entities;
 using Airline_Ticket_System.Entities;
 using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -97,14 +96,23 @@ public class EmailService : IEmailService
 
     public async Task SendBookingConfirmationAsync(string toEmail, string pnr, Flight flight, Passenger passenger, CancellationToken cancellationToken = default)
     {
+        if (flight == null)
+            throw new ArgumentNullException(nameof(flight), "Flight cannot be null for booking confirmation email");
+        
+        if (passenger == null)
+            throw new ArgumentNullException(nameof(passenger), "Passenger cannot be null for booking confirmation email");
+
+        _logger.LogInformation("Sending booking confirmation email to {Email} for PNR {PNR}. Flight: {FlightNumber}, Passenger: {PassengerName}", 
+            toEmail, pnr, flight.FlightNumber, $"{passenger.FirstName} {passenger.FamilyName}");
+            
         var model = new
         {
-            PNR = pnr,
+            PNR = pnr ?? string.Empty,
             Flight = flight,
             Passenger = passenger,
             PaymentAmount = (decimal?)null,
             PaymentStatus = "Confirmed",
-            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={pnr}"
+            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={Uri.EscapeDataString(pnr ?? string.Empty)}"
         };
 
         await SendEmailAsync(
@@ -122,7 +130,7 @@ public class EmailService : IEmailService
         {
             PNR = pnr,
             RefundAmount = refundAmount,
-            Flight = flight
+            Flight = flight,
             NewBookingUrl = GetBaseUrl() + "/Flight"
         };
 
@@ -135,12 +143,12 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
-    public async Task SendFlightScheduleChangedAsync(string toEmail, Flight flight, CancellationToken cancellationToken = default)
+    public async Task SendFlightScheduleChangedAsync(string toEmail, Flight flight, DateTime? originalDepartureTime = null, CancellationToken cancellationToken = default)
     {
         var model = new
         {
             Flight = flight,
-            OriginalDepartureTime = (DateTime?)null, // TODO: Get original time from context
+            OriginalDepartureTime = originalDepartureTime,
             FlightDetailsUrl = GetBaseUrl() + $"/Flight/Details/{flight.Id}"
         };
 
