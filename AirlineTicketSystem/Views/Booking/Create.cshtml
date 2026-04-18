@@ -22,23 +22,35 @@
 
     @if (isUser)
     {
+        <!-- For User role: Show "Book for myself" checkbox and "Create new passenger" option -->
         <div class="form-check mb-2">
             <input class="form-check-input" type="checkbox" asp-for="IsBookingForSelf" id="isBookingForSelf" onchange="handleBookingMode()" checked="@Model.IsBookingForSelf" />
-            <label class="form-check-label" for="isBookingForSelf">Booking for myself</label>
+            <label class="form-check-label" for="isBookingForSelf">Book for myself</label>
+        </div>
+
+        <div class="form-group" id="passenger-selection-options">
+            <label class="font-weight-bold">Passenger Selection:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="passengerOption" id="createNewPassenger" value="new" onchange="togglePassengerFields()" checked />
+                <label class="form-check-label" for="createNewPassenger">Create new passenger</label>
+            </div>
         </div>
     }
-
-    <div class="form-group" id="passenger-selection-options">
-        <label class="font-weight-bold">Passenger Selection:</label>
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="passengerOption" id="selectExistingUser" value="existing" onchange="togglePassengerFields()" />
-            <label class="form-check-label" for="selectExistingUser">Select existing registered user</label>
+    else
+    {
+        <!-- For Admin/Operator role: Show "Select registered user" and "Create new passenger" options -->
+        <div class="form-group" id="passenger-selection-options">
+            <label class="font-weight-bold">Passenger Selection:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="passengerOption" id="selectExistingUser" value="existing" onchange="togglePassengerFields()" />
+                <label class="form-check-label" for="selectExistingUser">Select registered user</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="passengerOption" id="createNewPassenger" value="new" onchange="togglePassengerFields()" checked />
+                <label class="form-check-label" for="createNewPassenger">Create new passenger</label>
+            </div>
         </div>
-        <div class="form-check">
-            <input class="form-check-input" type="radio" name="passengerOption" id="createNewPassenger" value="new" onchange="togglePassengerFields()" checked />
-            <label class="form-check-label" for="createNewPassenger">Create new passenger</label>
-        </div>
-    </div>
+    }
 
     <div id="existing-passenger-fields" class="form-group" style="display:none;">
         <label>Select Registered User</label>
@@ -50,11 +62,25 @@
     <div id="new-passenger-fields" style="display:none;">
         <div class="form-group">
             <label asp-for="FirstName"></label>
-            <input asp-for="FirstName" class="form-control" readonly="readonly" />
+            <input asp-for="FirstName" class="form-control" 
+                   data-user-firstname="@(isUser ? Model.FirstName ?? "" : "")"
+                   readonly="@(isUser && Model.IsBookingForSelf)" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="FamilyName"></label>
-            <input asp-for="FamilyName" class="form-control" readonly="readonly" />
+            <input asp-for="FamilyName" class="form-control" 
+                   data-user-familyname="@(isUser ? Model.FamilyName ?? "" : "")"
+                   readonly="@(isUser && Model.IsBookingForSelf)" />
+            <span asp-validation-for="FamilyName" class="text-danger"></span>
+        </div>
+        <div class="form-group">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" class="form-control" type="email" 
+                   data-user-email="@(isUser ? User.Identity.Name ?? "" : "")"
+                   readonly="@(isUser && Model.IsBookingForSelf)" 
+                   placeholder="Enter email address for booking notifications" />
+            <span asp-validation-for="Email" class="text-danger"></span>
         </div>
     </div>
 
@@ -107,37 +133,55 @@
             const newPassengerFields = document.getElementById("new-passenger-fields");
             const firstNameField = document.getElementById("FirstName");
             const familyNameField = document.getElementById("FamilyName");
+            const emailField = document.getElementById("Email");
             
             if (isSelf) {
-                // For self-booking, show name fields and make them readonly
+                // Self-booking: show name fields, make readonly, restore user's data
                 newPassengerFields.style.display = "block";
-                document.getElementById("existing-passenger-fields").style.display = "none";
+                const existingPassengerFields = document.getElementById("existing-passenger-fields");
+                if (existingPassengerFields) {
+                    existingPassengerFields.style.display = "none";
+                }
                 
-                if (firstNameField) firstNameField.readOnly = true;
-                if (familyNameField) familyNameField.readOnly = true;
-
-                // Disable passenger selection options when booking for self
+                if (firstNameField && familyNameField && emailField) {
+                    const userFirstName = firstNameField.getAttribute('data-user-firstname') || '';
+                    const userFamilyName = familyNameField.getAttribute('data-user-familyname') || '';
+                    const userEmail = emailField.getAttribute('data-user-email') || '';
+                    
+                    firstNameField.value = userFirstName;
+                    familyNameField.value = userFamilyName;
+                    emailField.value = userEmail;
+                    firstNameField.readOnly = true;
+                    familyNameField.readOnly = true;
+                    emailField.readOnly = true;
+                }
+                // Disable passenger selection options
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = true);
             } else {
-                // For booking others, enable all options
-                if (firstNameField) firstNameField.readOnly = false;
-                if (familyNameField) familyNameField.readOnly = false;
+                // Booking for others: enable options, clear fields when switching away from self-booking
+                if (firstNameField && familyNameField && emailField) {
+                    firstNameField.readOnly = false;
+                    familyNameField.readOnly = false;
+                    emailField.readOnly = false;
+                }
 
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = false);
                 
-                // Apply current passenger selection
-                togglePassengerFields();
+                clearPassengerFields(); // This clears the fields if not readOnly
+                togglePassengerFields(); // Apply current passenger selection
             }
         }
 
         function clearPassengerFields() {
             const firstNameField = document.getElementById("FirstName");
             const familyNameField = document.getElementById("FamilyName");
+            const emailField = document.getElementById("Email");
             
             if (firstNameField && !firstNameField.readOnly) firstNameField.value = "";
             if (familyNameField && !familyNameField.readOnly) familyNameField.value = "";
+            if (emailField && !emailField.readOnly) emailField.value = "";
         }
         
         function clearPassengerSelection() {

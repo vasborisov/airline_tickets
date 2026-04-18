@@ -14,13 +14,17 @@ namespace Airline_Ticket_System.Entities
         [Required]
         public string FamilyName { get; set; }
 
+        [EmailAddress]
+        public string? Email { get; set; }
+
         public virtual ICollection<FlightPassenger> FlightPassengers { get; set; }
 
 
-        public Passenger(string firstName, string familyName)
+        public Passenger(string firstName, string familyName, string? email = null)
         {
             this.FirstName = firstName;
             this.FamilyName = familyName;
+            this.Email = email;
         }
     }
 }
