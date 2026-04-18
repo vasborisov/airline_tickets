@@ -1,5 +1,4 @@
 using Airline_Ticket_System.Configurations;
-using Airline_Ticket_System.Data.Entities;
 using Airline_Ticket_System.Entities;
 using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -104,7 +103,7 @@ public class EmailService : IEmailService
             Passenger = passenger,
             PaymentAmount = (decimal?)null,
             PaymentStatus = "Confirmed",
-            BookingDetailsUrl = GetBaseUrl() + $"/Booking/Details/{pnr}"
+            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={pnr}"
         };
 
         await SendEmailAsync(
@@ -116,13 +115,13 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
-    public async Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, CancellationToken cancellationToken = default)
+    public async Task SendBookingCancelledAsync(string toEmail, string pnr, decimal? refundAmount, Flight? flight = null, CancellationToken cancellationToken = default)
     {
         var model = new
         {
             PNR = pnr,
             RefundAmount = refundAmount,
-            Flight = (Flight?)null, // TODO: Get flight details from context
+            Flight = flight,
             NewBookingUrl = GetBaseUrl() + "/Flight"
         };
 
@@ -135,12 +134,12 @@ public class EmailService : IEmailService
             cancellationToken);
     }
 
-    public async Task SendFlightScheduleChangedAsync(string toEmail, Flight flight, CancellationToken cancellationToken = default)
+    public async Task SendFlightScheduleChangedAsync(string toEmail, Flight flight, DateTime? originalDepartureTime = null, CancellationToken cancellationToken = default)
     {
         var model = new
         {
             Flight = flight,
-            OriginalDepartureTime = (DateTime?)null, // TODO: Get original time from context
+            OriginalDepartureTime = originalDepartureTime,
             FlightDetailsUrl = GetBaseUrl() + $"/Flight/Details/{flight.Id}"
         };
 
