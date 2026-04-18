@@ -49,6 +49,12 @@ public class BookingService : IBookingService
                 return BookingCommitResult.Fail("Please provide both First and Family names for a new passenger.", model);
             }
 
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                await AttachPassengerDropdownAsync(model, flight, cancellationToken);
+                return BookingCommitResult.Fail("Please provide an email address for booking notifications.", model);
+            }
+
             var existingPassenger = await _db.Passengers
                 .FirstOrDefaultAsync(p =>
                     p.FirstName.ToLower() == model.FirstName.Trim().ToLower() &&
@@ -56,11 +62,17 @@ public class BookingService : IBookingService
 
             if (existingPassenger != null)
             {
+                // Update email if it's different or empty
+                if (string.IsNullOrEmpty(existingPassenger.Email) || existingPassenger.Email != model.Email)
+                {
+                    existingPassenger.Email = model.Email.Trim();
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
                 passenger = existingPassenger;
             }
             else
             {
-                passenger = new Passenger(model.FirstName.Trim(), model.FamilyName.Trim());
+                passenger = new Passenger(model.FirstName.Trim(), model.FamilyName.Trim(), model.Email.Trim());
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -83,7 +95,7 @@ public class BookingService : IBookingService
 
             if (existingPassenger == null)
             {
-                passenger = new Passenger(selectedUser.FirstName, selectedUser.FamilyName);
+                passenger = new Passenger(selectedUser.FirstName, selectedUser.FamilyName, selectedUser.Email);
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -107,12 +119,18 @@ public class BookingService : IBookingService
 
             if (existingPassenger == null)
             {
-                passenger = new Passenger(currentUser.FirstName, currentUser.FamilyName);
+                passenger = new Passenger(currentUser.FirstName, currentUser.FamilyName, currentUser.Email);
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
             else
             {
+                // Update email if it's different or empty for self-booking
+                if (string.IsNullOrEmpty(existingPassenger.Email) || existingPassenger.Email != currentUser.Email)
+                {
+                    existingPassenger.Email = currentUser.Email;
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
                 passenger = existingPassenger;
             }
 
@@ -288,14 +306,30 @@ public class BookingService : IBookingService
 
     private async Task AttachPassengerDropdownAsync(BookSeatViewModel model, Flight? flight, CancellationToken cancellationToken)
     {
-        // Get all registered users regardless of IsActive status or role
-        model.ExistingPassengers = await _db.Users
-            .Select(u => new SelectListItem
-            {
-                Value = u.Id.ToString(),
-                Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
-            })
-            .ToListAsync(cancellationToken);
+        // Only populate for Admin/Operator roles, and only show User role users
+        var userRoleId = await _db.Roles
+            .Where(r => r.Name == "User")
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+            
+        if (userRoleId != null)
+        {
+            model.ExistingPassengers = await _db.Users
+                .Where(u => _db.UserRoles
+                    .Where(ur => ur.RoleId == userRoleId)
+                    .Select(ur => ur.UserId)
+                    .Contains(u.Id))
+                .Select(u => new SelectListItem
+                {
+                    Value = u.Id.ToString(),
+                    Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
+                })
+                .ToListAsync(cancellationToken);
+        }
+        else
+        {
+            model.ExistingPassengers = new List<SelectListItem>();
+        }
 
         if (flight != null)
         {
