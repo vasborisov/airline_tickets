@@ -8,6 +8,7 @@ using Airline_Ticket_System.Services;
 using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.EntityFrameworkCore;
 
 public class Program
@@ -36,6 +37,12 @@ public class Program
             options.LogoutPath = "/Account/Logout";
             options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
             options.SlidingExpiration = true;
+        });
+
+        builder.Services.Configure<RazorViewEngineOptions>(options =>
+        {
+            options.ViewLocationFormats.Add("/Views/EmailTemplates/{1}{0}.cshtml");
+            options.ViewLocationFormats.Add("/Views/EmailTemplates/{0}.cshtml");
         });
 
         builder.Services.AddControllersWithViews();
