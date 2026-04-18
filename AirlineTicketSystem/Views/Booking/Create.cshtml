@@ -1,4 +1,4 @@
-﻿@model Airline_Ticket_System.Models.Booking.BookSeatViewModel
+@model Airline_Ticket_System.Models.Booking.BookSeatViewModel
 @{
     var isUser = User.IsInRole("User");
 }
@@ -65,42 +65,22 @@
             <input asp-for="FirstName" class="form-control" 
                    data-user-firstname="@(isUser ? Model.FirstName ?? "" : "")"
                    readonly="@(isUser && Model.IsBookingForSelf)" />
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
             <span asp-validation-for="FirstName" class="text-danger"></span>
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
-            <span asp-validation-for="FirstName" class="text-danger"></span>
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
         </div>
         <div class="form-group">
             <label asp-for="FamilyName"></label>
             <input asp-for="FamilyName" class="form-control" 
                    data-user-familyname="@(isUser ? Model.FamilyName ?? "" : "")"
                    readonly="@(isUser && Model.IsBookingForSelf)" />
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
             <span asp-validation-for="FamilyName" class="text-danger"></span>
         </div>
         <div class="form-group">
             <label asp-for="Email"></label>
             <input asp-for="Email" class="form-control" type="email" 
-<<<<<<< HEAD
-                   data-user-email="@(isUser ? User.Identity.Name ?? "" : "")"
-                   readonly="@(isUser && Model.IsBookingForSelf)" 
-                   placeholder="Enter email address for booking notifications" />
-            <span asp-validation-for="Email" class="text-danger"></span>
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
                    data-user-email="@(isUser ? User.Identity?.Name ?? "" : "")"
                    readonly="@(isUser && Model.IsBookingForSelf)" 
                    placeholder="Enter email address for booking notifications" />
             <span asp-validation-for="Email" class="text-danger"></span>
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
         </div>
     </div>
 
@@ -109,20 +89,14 @@
 </form>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    
     <script>
-         
         function togglePassengerFields() {
-            const selectExisting = document.getElementById("selectExistingUser");
-            const createNew = document.getElementById("createNewPassenger");
-            const isExisting = selectExisting && selectExisting.checked;
-            const isNewPassenger = createNew && createNew.checked;
+            const isExisting = document.querySelector('input[name="passengerOption"]:checked')?.value === 'existing';
+            const isNewPassenger = document.querySelector('input[name="passengerOption"]:checked')?.value === 'new';
+            const createNewPassengerField = document.getElementById('CreateNewPassenger');
             
-            // Update the CreateNewPassenger hidden field
-            const createNewPassengerField = document.querySelector('input[name="CreateNewPassenger"]');
             if (createNewPassengerField) {
                 createNewPassengerField.value = isNewPassenger ? 'true' : 'false';
             }
@@ -156,34 +130,13 @@
             const emailField = document.getElementById("Email");
             
             if (isSelf) {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                // Self-booking: show name fields, make readonly, restore user's names
-=======
                 // Self-booking: show name fields, make readonly, restore user's data
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
-                // Self-booking: show name fields, make readonly, restore user's data
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 newPassengerFields.style.display = "block";
                 const existingPassengerFields = document.getElementById("existing-passenger-fields");
                 if (existingPassengerFields) {
                     existingPassengerFields.style.display = "none";
                 }
                 
-<<<<<<< HEAD
-<<<<<<< HEAD
-                if (firstNameField && familyNameField) {
-                    const userFirstName = firstNameField.getAttribute('data-user-firstname') || '';
-                    const userFamilyName = familyNameField.getAttribute('data-user-familyname') || '';
-                    
-                    firstNameField.value = userFirstName;
-                    familyNameField.value = userFamilyName;
-                    firstNameField.readOnly = true;
-                    familyNameField.readOnly = true;
-=======
-=======
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 if (firstNameField && familyNameField && emailField) {
                     const userFirstName = firstNameField.getAttribute('data-user-firstname') || '';
                     const userFamilyName = familyNameField.getAttribute('data-user-familyname') || '';
@@ -195,47 +148,22 @@
                     firstNameField.readOnly = true;
                     familyNameField.readOnly = true;
                     emailField.readOnly = true;
-<<<<<<< HEAD
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 }
                 // Disable passenger selection options
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = true);
             } else {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                // Booking for others: enable options, clear names when switching away from self-booking
-                if (firstNameField && familyNameField) {
-                    firstNameField.readOnly = false;
-                    familyNameField.readOnly = false;
-=======
-=======
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 // Booking for others: enable options, clear fields when switching away from self-booking
                 if (firstNameField && familyNameField && emailField) {
                     firstNameField.readOnly = false;
                     familyNameField.readOnly = false;
                     emailField.readOnly = false;
-<<<<<<< HEAD
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 }
 
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = false);
                 
-<<<<<<< HEAD
-<<<<<<< HEAD
-                clearPassengerFields(); // This clears the names if not readOnly
-=======
                 clearPassengerFields(); // This clears the fields if not readOnly
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
-=======
-                clearPassengerFields(); // This clears the fields if not readOnly
->>>>>>> 2e6e2c7e1950844d2ec4b518e724b16d95508f1a
                 togglePassengerFields(); // Apply current passenger selection
             }
         }
@@ -258,7 +186,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
-            handleBookingMode(); 
+            handleBookingMode();
             togglePassengerFields();
         });
     </script>
