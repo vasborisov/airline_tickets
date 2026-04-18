@@ -60,11 +60,7 @@
     <p><strong>👤 Пасажерски данни:</strong></p>
     <p><strong>Име:</strong> @Model.Passenger.FirstName @Model.Passenger.FamilyName</p>
     <p><strong>Имейл:</strong> @Model.Passenger.Email</p>
-    <p><strong>Дата на раждане:</strong> @Model.Passenger.DateOfBirth.ToString("dd.MM.yyyy")</p>
-    @if (!string.IsNullOrEmpty(Model.Passenger.PassportId))
-    {
-        <p><strong>Паспорт:</strong> @Model.Passenger.PassportId</p>
-    }
+
 </div>
 
 @if (Model.PaymentAmount.HasValue)

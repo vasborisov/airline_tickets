@@ -102,8 +102,8 @@ public class EmailService : IEmailService
             PNR = pnr,
             Flight = flight,
             Passenger = passenger,
-            PaymentAmount = (decimal?)null, // TODO: Get from booking context
-            PaymentStatus = "Confirmed", // TODO: Get from booking context
+            PaymentAmount = (decimal?)null,
+            PaymentStatus = "Confirmed",
             BookingDetailsUrl = GetBaseUrl() + $"/Booking/Details/{pnr}"
         };
 
