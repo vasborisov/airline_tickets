@@ -1,13 +1,13 @@
+@model BookingConfirmationEmailModel
+
 @{
     ViewData["Title"] = "Потвърждение на резервация";
     Layout = "~/Views/EmailTemplates/Shared/_EmailLayout.cshtml";
 }
 
-@model dynamic
-
 <h2>🎫 Потвърждение на резервация</h2>
 
-<p>Здравейте <strong>@Model.Passenger.FirstName @Model.Passenger.FamilyName</strong>,</p>
+<p>Здравейте <strong>@(Model.Passenger?.FirstName ?? "Уважаеми") @(Model.Passenger?.FamilyName ?? "пасажере")</strong>,</p>
 
 <p>Благодарим ви за резервацията! Вашият авиобилет е успешно резервиран и потвърден.</p>
 
@@ -19,30 +19,30 @@
 
 <div class="flight-details">
     <div class="route">
-        ✈️ @Model.Flight.DepartureCity → @Model.Flight.ArrivalCity
+        ✈️ @(Model.Flight?.DepartureCity ?? "N/A") → @(Model.Flight?.ArrivalCity ?? "N/A")
     </div>
     
     <div class="info">
         <span><strong>Полет:</strong></span>
-        <span>@Model.Flight.FlightNumber</span>
+        <span>@(Model.Flight?.FlightNumber ?? "N/A")</span>
     </div>
     
     <div class="info">
         <span><strong>Дата и час на заминаване:</strong></span>
-        <span>@Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+        <span>@(Model.Flight != null ? Model.Flight.DepartureDateTime.ToString("dd.MM.yyyy HH:mm") : "N/A")</span>
     </div>
     
     <div class="info">
         <span><strong>Дата и час на пристигане:</strong></span>
-        <span>@Model.Flight.ArrivalDateTime.ToString("dd.MM.yyyy HH:mm")</span>
+        <span>@(Model.Flight != null ? Model.Flight.ArrivalDateTime.ToString("dd.MM.yyyy HH:mm") : "N/A")</span>
     </div>
     
     <div class="info">
         <span><strong>Продължителност:</strong></span>
-        <span>@Model.Flight.Duration мин</span>
+        <span>@(Model.Flight != null ? Model.Flight.Duration.ToString() : "N/A") мин</span>
     </div>
     
-    @if (!string.IsNullOrEmpty(Model.Flight.Gate))
+    @if (Model.Flight != null && !string.IsNullOrEmpty(Model.Flight.Gate))
     {
         <div class="info">
             <span><strong>Гейт:</strong></span>
@@ -52,15 +52,14 @@
     
     <div class="info">
         <span><strong>Статус:</strong></span>
-        <span>@Model.Flight.Status</span>
+        <span>@(Model.Flight?.Status ?? "N/A")</span>
     </div>
 </div>
 
 <div class="highlight-box">
     <p><strong>👤 Пасажерски данни:</strong></p>
-    <p><strong>Име:</strong> @Model.Passenger.FirstName @Model.Passenger.FamilyName</p>
-    <p><strong>Имейл:</strong> @Model.Passenger.Email</p>
-
+    <p><strong>Име:</strong> @(Model.Passenger?.FirstName ?? "N/A") @(Model.Passenger?.FamilyName ?? "N/A")</p>
+    <p><strong>Имейл:</strong> @(Model.Passenger?.Email ?? "N/A")</p>
 </div>
 
 @if (Model.PaymentAmount.HasValue)
