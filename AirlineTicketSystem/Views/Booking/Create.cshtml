@@ -65,18 +65,13 @@
             <input asp-for="FirstName" class="form-control" 
                    data-user-firstname="@(isUser ? Model.FirstName ?? "" : "")"
                    readonly="@(isUser && Model.IsBookingForSelf)" />
-<<<<<<< HEAD
-=======
             <span asp-validation-for="FirstName" class="text-danger"></span>
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
         </div>
         <div class="form-group">
             <label asp-for="FamilyName"></label>
             <input asp-for="FamilyName" class="form-control" 
                    data-user-familyname="@(isUser ? Model.FamilyName ?? "" : "")"
                    readonly="@(isUser && Model.IsBookingForSelf)" />
-<<<<<<< HEAD
-=======
             <span asp-validation-for="FamilyName" class="text-danger"></span>
         </div>
         <div class="form-group">
@@ -86,7 +81,6 @@
                    readonly="@(isUser && Model.IsBookingForSelf)" 
                    placeholder="Enter email address for booking notifications" />
             <span asp-validation-for="Email" class="text-danger"></span>
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
         </div>
     </div>
 
@@ -142,27 +136,13 @@
             const emailField = document.getElementById("Email");
             
             if (isSelf) {
-<<<<<<< HEAD
-                // Self-booking: show name fields, make readonly, restore user's names
-=======
                 // Self-booking: show name fields, make readonly, restore user's data
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
                 newPassengerFields.style.display = "block";
                 const existingPassengerFields = document.getElementById("existing-passenger-fields");
                 if (existingPassengerFields) {
                     existingPassengerFields.style.display = "none";
                 }
                 
-<<<<<<< HEAD
-                if (firstNameField && familyNameField) {
-                    const userFirstName = firstNameField.getAttribute('data-user-firstname') || '';
-                    const userFamilyName = familyNameField.getAttribute('data-user-familyname') || '';
-                    
-                    firstNameField.value = userFirstName;
-                    familyNameField.value = userFamilyName;
-                    firstNameField.readOnly = true;
-                    familyNameField.readOnly = true;
-=======
                 if (firstNameField && familyNameField && emailField) {
                     const userFirstName = firstNameField.getAttribute('data-user-firstname') || '';
                     const userFamilyName = familyNameField.getAttribute('data-user-familyname') || '';
@@ -174,34 +154,22 @@
                     firstNameField.readOnly = true;
                     familyNameField.readOnly = true;
                     emailField.readOnly = true;
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
                 }
                 // Disable passenger selection options
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = true);
             } else {
-<<<<<<< HEAD
-                // Booking for others: enable options, clear names when switching away from self-booking
-                if (firstNameField && familyNameField) {
-                    firstNameField.readOnly = false;
-                    familyNameField.readOnly = false;
-=======
                 // Booking for others: enable options, clear fields when switching away from self-booking
                 if (firstNameField && familyNameField && emailField) {
                     firstNameField.readOnly = false;
                     familyNameField.readOnly = false;
                     emailField.readOnly = false;
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
                 }
 
                 const radioButtons = document.querySelectorAll('input[name="passengerOption"]');
                 radioButtons.forEach(radio => radio.disabled = false);
                 
-<<<<<<< HEAD
-                clearPassengerFields(); // This clears the names if not readOnly
-=======
                 clearPassengerFields(); // This clears the fields if not readOnly
->>>>>>> dc54d34dbd45686d66958c7bc447bfd21aded9df
                 togglePassengerFields(); // Apply current passenger selection
             }
         }
