@@ -55,13 +55,27 @@ namespace Airline_Ticket_System.Controllers
 
             var currentUser = await _userManager.GetUserAsync(User);
             
-            // Always provide the list of all registered users for selection
-            var allUsers = await _context.Users.Select(u => new SelectListItem
+            // Provide list of registered users excluding Admin and Operator roles
+            var allUsers = await _context.Users.ToListAsync();
+            var filteredUsers = new List<SelectListItem>();
+            
+            foreach (var user in allUsers)
             {
-                Value = u.Id.ToString(),
-                Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
-            }).ToListAsync();
-            model.ExistingPassengers = allUsers;
+                // Check if user is NOT in Admin or Operator roles
+                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                var isOperator = await _userManager.IsInRoleAsync(user, "Operator");
+                
+                if (!isAdmin && !isOperator)
+                {
+                    filteredUsers.Add(new SelectListItem
+                    {
+                        Value = user.Id.ToString(),
+                        Text = $"{user.FirstName} {user.FamilyName} ({user.Email})"
+                    });
+                }
+            }
+            
+            model.ExistingPassengers = filteredUsers;
             
             // For User role, pre-populate their information for self-booking
             if (User.IsInRole("User") && currentUser != null)
@@ -85,13 +99,27 @@ namespace Airline_Ticket_System.Controllers
         {
             if (!ModelState.IsValid)
             {
-                model.ExistingPassengers = await _context.Passengers
-                    .Select(p => new SelectListItem
+                // Repopulate ExistingPassengers with same filtering logic as GET action
+                var allUsers = await _context.Users.ToListAsync();
+                var filteredUsers = new List<SelectListItem>();
+                
+                foreach (var user in allUsers)
+                {
+                    // Check if user is NOT in Admin or Operator roles
+                    var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                    var isOperator = await _userManager.IsInRoleAsync(user, "Operator");
+                    
+                    if (!isAdmin && !isOperator)
                     {
-                        Value = p.Id.ToString(),
-                        Text = $"{p.FirstName} {p.FamilyName}"
-                    })
-                    .ToListAsync();
+                        filteredUsers.Add(new SelectListItem
+                        {
+                            Value = user.Id.ToString(),
+                            Text = $"{user.FirstName} {user.FamilyName} ({user.Email})"
+                        });
+                    }
+                }
+                
+                model.ExistingPassengers = filteredUsers;
                 return View(model);
             }
 
@@ -122,17 +150,17 @@ namespace Airline_Ticket_System.Controllers
                         // Send email to passenger if they have an email address
                         string? emailToSend = null;
                         
-                        if (!string.IsNullOrEmpty(fp.Passenger.Email))
+                        if (!string.IsNullOrWhiteSpace(fp.Passenger.Email))
                         {
-                            emailToSend = fp.Passenger.Email;
+                            emailToSend = fp.Passenger.Email.Trim();
                         }
-                        else if (!string.IsNullOrEmpty(currentUser?.Email))
+                        else if (!string.IsNullOrWhiteSpace(currentUser?.Email))
                         {
                             // Fallback to booking user's email if passenger email not available
-                            emailToSend = currentUser.Email;
+                            emailToSend = currentUser.Email.Trim();
                         }
                         
-                        if (!string.IsNullOrEmpty(emailToSend))
+                        if (!string.IsNullOrWhiteSpace(emailToSend))
                         {
                             try
                             {

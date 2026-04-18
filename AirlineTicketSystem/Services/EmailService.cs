@@ -97,6 +97,9 @@ public class EmailService : IEmailService
 
     public async Task SendBookingConfirmationAsync(string toEmail, string pnr, Flight flight, Passenger passenger, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(toEmail))
+            throw new ArgumentException("Email address cannot be null, empty, or whitespace.", nameof(toEmail));
+            
         if (flight == null)
             throw new ArgumentNullException(nameof(flight), "Flight cannot be null for booking confirmation email");
         
@@ -189,6 +192,13 @@ public class EmailService : IEmailService
     {
         try
         {
+            // Validate email address early
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
+                _logger.LogWarning("Cannot send email: recipient email address is null or empty. Subject: {Subject}", subject);
+                return;
+            }
+
             // Rate limiting check
             if (!IsWithinRateLimit(toEmail))
             {
@@ -285,6 +295,17 @@ public class EmailService : IEmailService
 
     private async Task SendSmtpEmailAsync(string toEmail, string subject, string htmlBody, CancellationToken cancellationToken)
     {
+        // Validate email addresses to prevent "empty string" errors
+        if (string.IsNullOrWhiteSpace(toEmail))
+        {
+            throw new ArgumentException("Recipient email address cannot be null or empty.", nameof(toEmail));
+        }
+        
+        if (string.IsNullOrWhiteSpace(_emailSettings.SenderEmail))
+        {
+            throw new InvalidOperationException("Sender email address is not configured or is empty.");
+        }
+
         using var smtpClient = new SmtpClient(_emailSettings.SmtpServer, _emailSettings.Port)
         {
             EnableSsl = _emailSettings.EnableSsl,
@@ -294,8 +315,8 @@ public class EmailService : IEmailService
 
         using var mailMessage = new MailMessage
         {
-            From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName),
-            Subject = subject,
+            From = new MailAddress(_emailSettings.SenderEmail, _emailSettings.SenderName ?? "Airline Ticket System"),
+            Subject = subject ?? "Email Notification",
             Body = htmlBody,
             IsBodyHtml = true,
             BodyEncoding = Encoding.UTF8,

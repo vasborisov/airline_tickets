@@ -28,13 +28,14 @@
 - **Професионално ниво на сигурност**
 
 ### 🏗️ Технологичен стек
-- **Backend**: .NET 10 ASP.NET Core MVC
-- **Database**: Entity Framework Core с SQL Server
-- **Frontend**: Bootstrap 5 с професионална авиационна стилистика
-- **Authentication**: ASP.NET Core Identity с ролево-базиран достъп
-- **Email**: Интегрирана система за имейл уведомления
-- **Logging**: Структурирано логиране за професионален мониторинг
-- **Testing**: Пълен набор от unit и integration тестове
+- **Backend**: .NET Core ASP.NET Core MVC (не REST API)
+- **Database**: Entity Framework Core с SQL Server (DefaultConnection)
+- **Frontend**: Razor Views с Bootstrap и професионална авиационна стилистика
+- **Authentication**: ASP.NET Core Identity с cookie authentication и ролево-базиран достъп
+- **Email**: Razor template-based система с SMTP (SmtpClient)
+- **Background Services**: Hosted Services за автоматични reminder
+- **Logging**: ILogger интеграция
+- **Testing**: AirlineTicketSystem.Tests проект
 
 ------------------------------------------------------------------------
 
@@ -166,39 +167,41 @@ dotnet run --project AirlineTicketSystem
 - **Migrations**: Промени в схемата на базата данни
 
 #### 4.4 Infrastructure Layer (Инфраструктура)
-- **Email Services**: Изпращане на имейли
-- **Logging**: Структурирано логиране
-- **Configuration**: Управление на настройки
-- **Caching**: Кеширане на данни
+- **Email Services**: Изпращане на имейли с Razor templates
+- **Logging**: ILogger структурирано логиране
+- **Configuration**: appsettings.json и IOptions pattern
+- **Background Services**: FlightReminderBackgroundService (hosted service)
 
 ### 🔄 Модел на данните
 
 ```
-ApplicationUser (Потребители)
-├── FirstName, FamilyName, Email
-├── IsActive (активен/неактивен)
-└── Roles (Admin, Operator, User)
+ApplicationUser (Потребители) - extends IdentityUser
+├── FirstName, FamilyName, Email (от Identity)
+├── IsActive (bool активен/неактивен)
+└── AspNetUserRoles → AspNetRoles (Admin, Operator, User)
 
 Flight (Полети)
 ├── FlightNumber (номер на полет)
 ├── DepartureCity, ArrivalCity
-├── DepartureDateTime, ArrivalDateTime
-├── Capacity (капацитет)
-├── Status (статус на полета)
-├── Gate (гейт)
-└── Price (цена)
+├── DepartureDateTime, ArrivalDateTime 
+├── Duration (минути), Price (decimal)
+├── Capacity (int капацитет)
+├── Status (string статус на полета)
+├── Gate (nullable string)
+└── RowVersion (за concurrency control)
 
-FlightPassenger (Резервации)
-├── PNR (уникален код)
-├── BookingStatus (статус на резервацията)
-├── PaymentAmount, PaymentStatus
-├── CancelledAt, RefundAmount
-└── CreatedAt (дата на създаване)
+FlightPassenger (Резервации) - many-to-many junction
+├── PNR (уникален 6-char код)
+├── BookingStatus ("Confirmed"/"Cancelled")
+├── PaymentAmount, PaymentStatus ("Captured"/"Refunded"/"Forfeited")
+├── RefundAmount, CancelledAt
+├── CreatedAt, CreatedByUserId
+└── FlightId, PassengerId (foreign keys)
 
 Passenger (Пасажери)
 ├── FirstName, FamilyName
-├── Email, DateOfBirth
-└── PassportId (паспорт)
+├── Email (nullable, добавен в миграция)
+└── FlightPassengers navigation
 ```
 
 ------------------------------------------------------------------------
@@ -207,32 +210,37 @@ Passenger (Пасажери)
 
 ### 👑 Администратор
 **Пълен достъп до системата**
-- ✅ Управление на всички потребители и оператори
-- ✅ Активиране/деактивиране на акаунти
 - ✅ Създаване, редактиране и изтриване на полети
-- ✅ Достъп до всички отчети и статистики
-- ✅ Управление на системни настройки
-- ✅ Преглед на всички резервации
-- ✅ Експорт на данни
+- ✅ Управление на потребители (без други админи)
+- ✅ Активиране/деактивиране на акаунти (с изключение на себе си)
+- ✅ Създаване на оператори
+- ✅ Достъп до всички отчети (дневни, статистики, финансови)
+- ✅ Преглед на всички резервации по PNR
+- ✅ Правене на резервации за клиенти
+- ✅ Автоматични имейл уведомления при промени в полети
+- ❌ Не може да деактивира себе си или други админи
 
 ### 🧑‍💼 Оператор
 **Ограничен административен достъп**
-- ✅ Преглед на всички полети и детайли
-- ✅ Помощ при резервации за клиенти
-- ✅ Достъп до основни отчети
+- ✅ Преглед на всички полети и детайли (анонимно)
+- ✅ Правене на резервации за клиенти
 - ✅ Търсене на резервации по PNR
-- ❌ Не може да редактира полети
+- ✅ Достъп до дневни отчети и статистики за резервации
+- ❌ Не може да създава/редактира/изтрива полети
 - ❌ Не може да управлява потребители
+- ❌ Няма достъп до финансови отчети
 
 ### 👤 Потребител
 **Самообслужване и лични резервации**
-- ✅ Търсене и филтриране на полети
-- ✅ Правене на резервации за себе си или други
+- ✅ Търсене и филтриране на полети (анонимно)
+- ✅ Преглед на детайли за полети (анонимно)
+- ✅ Правене на резервации (предимно за себе си)
 - ✅ Преглед на собствените резервации
-- ✅ Отмяна на резервации (с условия)
-- ✅ Редактиране на личен профил
-- ✅ Търсене на резервация по PNR
-- ❌ Достъп само до собствените данни
+- ✅ Отмяна на резервации (24+ часа = пълно възстановяване, по-малко = 0)
+- ✅ Редактиране на личен профил (име, фамилия, имейл)
+- ✅ Търсене на собствени резервации по PNR
+- ❌ Достъп само до собствените резервации
+- ❌ Няма административни права
 
 ------------------------------------------------------------------------
 
@@ -242,52 +250,54 @@ Passenger (Пасажери)
 
 #### За администратори:
 - **Създаване на нови полети** с пълна информация
-  - Номер на полет, маршрут, разписание
-  - Капацитет, цена, гейт
-  - Статус (Scheduled, Delayed, Cancelled, Boarding, Departed)
+  - Номер на полет (автоматично ToUpperInvariant), маршрут, разписание
+  - Продължителност в минути, капацитет, цена, опционален гейт
+  - Статус се задава автоматично като "Scheduled"
+  - ArrivalDateTime = DepartureDateTime + Duration
 - **Редактиране на съществуващи полети**
-  - Промяна на разписание и детайли
-  - Автоматични уведомления до засегнатите пасажери
-- **Изтриване на полети** (само при липса на активни резервации)
-- **Масово управление** на полети
+  - Ако няма потвърдени резервации: пълно редактиране
+  - С потвърдени резервации: само разписание/статус/гейт (не капацитет/цена/маршрут)
+  - Автоматични уведомления до CreatedByUser.Email при значителни промени
+- **Изтриване на полети** (GET заявка - само при липса на потвърдени резервации)
 
 ### 🎫 Система за резервации
 
-#### Разширени възможности:
-- **Уникални PNR кодове** за всяка резервация
-- **Проследяване на плащания** и статуси
-- **Автоматично управление на капацитета** на полетите
-- **Защита от двойни резервации** със същия полет/пасажер
-- **Система за отмени** с автоматично изчисляване на възстановявания
+#### Реализирани възможности:
+- **Уникални PNR кодове** (6 символа) за всяка резервация
+- **Вътрешно отчитане на плащания** (без реален PSP) - статуси "Captured", "Refunded", "Forfeited"
+- **Автоматично управление на капацитета** на полетите с проверка за наличност
+- **Защита от двойни резервации** (unique constraint за потвърдени резервации)
+- **Система за отмени** с автоматично изчисляване: ≥24ч = пълно възстановяване, <24ч = 0
+- **Трансакционна сигурност** със serializable isolation level
 
 #### Процес на резервация:
-1. **Търсене** на подходящ полет
+1. **Търсене** на подходящ полет (с филтри и сортиране)
 2. **Избор** на полет и въвеждане на пасажерски данни
-3. **Потвърждение** и генериране на PNR
-4. **Автоматично имейл** уведомление с детайли
-5. **Проследяване** на статуса в реално време
+3. **Валидация** на капацитет и уникалност на резервацията
+4. **Генериране на PNR** и задаване на PaymentAmount = цена на полета
+5. **Автоматично имейл** уведомление (ако SMTP е конфигуриран)
+6. **Възможност за отмяна** с изчисляване на възстановяване
 
-### 🔍 Разширена търсачка
+### 🔍 Търсачка на полети
 
-#### Критерии за търсене:
-- **Основни**: начален и краен град
-- **Дати**: конкретна дата или период
-- **Цени**: минимална и максимална граница
-- **Статус**: активни, забавени, отменени полети
-- **Наличност**: само полети със свободни места
+#### Реализирани критерии за търсене:
+- **Основни**: DepartureCity и ArrivalCity (точно съвпадение)
+- **Дати**: FromDate и ToDate (период)
+- **Цени**: MinPrice и MaxPrice (граници)
+- **Статус**: филтриране по статус на полета
+- **Пагинация**: Page и PageSize (по подразбиране 15 на страница)
 
-#### Сортиране по:
-- Цена (възходящо/низходящо)
-- Време на заминаване
-- Продължителност на полета
-- Номер на полет
-- Наличност на места
+#### Сортиране по (SortBy parameter):
+- "departure" - време на заминаване (по подразбиране)
+- "price" - цена
+- "capacity" - капацитет
+- Други критерии според FlightSearchCriteria
 
-#### Допълнителни функции:
-- **Пагинация** за големи резултати
-- **Филтриране в реално време** без презареждане
-- **Запазване на търсенията** за registered потребители
-- **Предложения** при липса на резултати
+#### Реализирани функции:
+- **Пагинация** с TotalCount за големи резултати
+- **POST форма с Reset** за изчистване на търсенето
+- **Анонимен достъп** - не изисква логин за търсене
+- Резултатите включват само полети със Status и налични места
 
 ------------------------------------------------------------------------
 
@@ -295,24 +305,23 @@ Passenger (Пасажери)
 
 ### 📊 Отчети и анализи
 
-#### 7.1 Дневни отчети за полети
-- Списък с всички полети за избрана дата
-- Статус на всеки полет и заетост
+#### 7.1 Дневни отчети за полети [Admin,Operator]
+- Списък с всички полети за избрана дата (по подразбиране днес)
+- Статус на всеки полет и load factor (заети/общо места)
 - Обобщена статистика за деня
-- Експорт в Excel/PDF формат
+- Достъпно за Admin и Operator роли
 
-#### 7.2 Статистики за резервации
+#### 7.2 Статистики за резервации [Admin,Operator]
 - **Общо резервации**: потвърдени vs отменени
-- **Популярни маршрути**: най-търсените дестинации  
+- **Популярни маршрути**: най-търсените дестинации (топ маршрути)
 - **Заетост на полетите**: процент запълнени места
-- **Тенденции**: графики за периода
+- Агрегирана статистика без дата филтри
 
-#### 7.3 Финансови отчети
-- **Общи приходи** за период
-- **Приходи по полети** детайлно
-- **Възстановявания** и загуби
-- **Нетни приходи** с визуализация
-- **Интерактивни графики** с Chart.js
+#### 7.3 Финансови отчети [Admin само]
+- **Общи приходи** за период (опционални from/to дата филтри)
+- **Gross приходи** vs **Възстановявания** (refunds)
+- **Нетни приходи** (gross - refunds)
+- Достъпно само за Admin роля
 
 ### 📧 Професионална система за имейл уведомления
 
@@ -400,68 +409,76 @@ Passenger (Пасажери)
 - **Проследяване на активността** на потребителите
 
 #### Управление на системата:
-- **Мониториране на производителността**
-- **Преглед на системни логове**
-- **Управление на настройки**
-- **Backup и възстановяване** на данни
-- **Обновяване на системата**
+- **Основен CRUD** за потребители и полети
+- **ILogger логиране** в конзолата и файлове
+- **appsettings.json** конфигурация
+- **Entity Framework миграции** за база данни
+- **Manual deployment** и обновяване
 
-### 📈 Мониторинг и производителност
+### 📊 Налични отчети и статистики
 
-#### Ключови показатели:
-- **Брой активни потребители** в реално време
-- **Брой резервации** по дни/седмици/месеци
-- **Заетост на полетите** като процент
-- **Време за отговор** на системата
-- **Грешки и предупреждения**
-- **Email статистики** - изпратени/неуспешни имейли
-- **Template performance** - време за рендиране на шаблони
+#### Реализирани отчети:
+- **Дневни полети** (/Reports/DailyFlights) - списък за дата с load factor
+- **Статистики за резервации** (/Reports/BookingStatistics) - общо/отменени + топ маршрути  
+- **Финансови отчети** (/Reports/Financial) - приходи/възстановявания за период
+- **Лични резервации** (/Booking/MyBooked) - за всеки потребител
 
-#### Алерти и уведомления:
-- **Критични грешки** - незабавно уведомяване
-- **Високо натоварване** - мониторинг на ресурсите  
-- **Неуспешни плащания** - следене на транзакциите
-- **Подозрителна активност** - сигурностни алерти
-- **Email service failures** - SMTP connection грешки
-- **Rate limiting violations** - превишаване на имейл лимити
-- **Template rendering errors** - проблеми с email шаблони
+#### Логиране и мониторинг:
+- **ILogger интеграция** в всички ключови операции
+- **Email операции** - успешни/неуспешни изпращания
+- **Background service** - Flight reminder execution
+- **Database операции** - booking conflicts, concurrency
+- **Authentication** - login attempts, account status changes
 
 ------------------------------------------------------------------------
 
 ## 9. Техническа документация
 
-### 🔧 API Endpoints
+### 🔧 MVC Контролери и действия
 
-#### Flight Management
+#### Flight Management (FlightController)
 ```
-GET    /Flight                    - Списък полети с търсене
-GET    /Flight/Details/{id}       - Детайли за полет
+GET    /Flight                    - Списък полети с търсене и пагинация (анонимно)
+GET    /Flight/Details/{id}       - Детайли за полет (анонимно)
+GET    /Flight/Create             - Форма за създаване на полет [Admin]
 POST   /Flight/Create             - Създаване на полет [Admin]
-PUT    /Flight/Edit/{id}          - Редактиране на полет [Admin] + Email notifications
-DELETE /Flight/Delete/{id}        - Изтриване на полет [Admin]
+GET    /Flight/Edit/{id}          - Форма за редактиране [Admin]
+POST   /Flight/Edit/{id}          - Редактиране на полет [Admin] + Email уведомления
+GET    /Flight/Delete/{id}        - Изтриване на полет [Admin] (само без резервации)
+POST   /Flight/Reset              - Нулиране на търсенето
+GET    /Flight/BookSeat/{id}      - Пренасочване към резервация [Authorize]
 ```
 
-#### Booking Management
+#### Booking Management (BookingController) - [Authorize на целия контролер]
 ```
-GET    /Booking/MyBooked          - Лични резервации [User]
-POST   /Booking/Create            - Нова резервация + Confirmation email
-GET    /Booking/Details/{pnr}     - Детайли по PNR
-POST   /Booking/Cancel/{id}       - Отмяна на резервация + Cancellation email
-```
-
-#### Reports & Analytics
-```
-GET    /Reports/DailyFlights      - Дневен отчет [Admin]
-GET    /Reports/BookingStatistics - Статистики [Admin]  
-GET    /Reports/Financial         - Финансов отчет [Admin]
+GET    /Booking/Create?id={flightId}  - Форма за резервация
+POST   /Booking/Create                - Нова резервация + Confirmation email
+GET    /Booking/MyBooked              - Лични резервации на потребителя
+POST   /Booking/Cancel/{id}           - Отмяна на резервация + Cancellation email
+GET    /Booking/ByPnr?pnr={code}      - Търсене по PNR код (собственик/Admin/Operator)
 ```
 
-#### User Management
+#### Reports & Analytics (ReportsController) - [Authorize]
 ```
-GET    /Account/Users             - Управление потребители [Admin]
-POST   /Account/ToggleUserStatus  - Активиране/деактивиране [Admin] + Status email
+GET    /Reports/DailyFlights?day={date}     - Дневен отчет [Admin,Operator]
+GET    /Reports/BookingStatistics           - Статистики за резервации [Admin,Operator]  
+GET    /Reports/Financial?from={date}&to={date} - Финансов отчет [Admin]
+```
+
+#### User Management (AccountController)
+```
+GET    /Account/Register          - Форма за регистрация (анонимно)
+POST   /Account/Register          - Регистрация потребител + Welcome email [AllowAnonymous]
+GET    /Account/Login             - Форма за вход (анонимно)
+POST   /Account/Login             - Вход в системата + проверка IsActive
+POST   /Account/Logout            - Изход от системата
+GET    /Account/RegisterOperator  - Форма за оператор (няма [Authorize]!)
 POST   /Account/RegisterOperator  - Създаване оператор [Admin] + Welcome email
-POST   /Account/Register          - Регистрация потребител + Welcome email
+GET    /Account/EditProfile       - Редактиране на профил [User]
+POST   /Account/EditProfile       - Обновяване на профил [User]
+GET    /Account/Users             - Списък потребители (не Admin) [Admin]
+POST   /Account/ToggleUserStatus  - Активиране/деактивиране [Admin] + Status email
+GET    /Account/AccessDenied      - Страница за отказан достъп
 ```
 
 ### 📧 Email Service API
@@ -477,29 +494,31 @@ Task SendFlightScheduleChangedAsync(string toEmail, Flight flight);
 Task SendFlightReminderAsync(string toEmail, string pnr, Flight flight, Passenger passenger);
 ```
 
-#### Email Template Structure
+#### Email Template Structure (Проверена структура)
 ```
 Views/EmailTemplates/
 ├── Shared/_EmailLayout.cshtml     - Основен layout с airline брандинг
 ├── Account/                       - Акаунт управление
-│   ├── WelcomeRegistration.cshtml
-│   ├── OperatorAccountCreated.cshtml  
-│   └── AccountStatusChanged.cshtml
+│   ├── WelcomeRegistration.cshtml        - При регистрация на потребител
+│   ├── OperatorAccountCreated.cshtml     - При създаване на оператор
+│   └── AccountStatusChanged.cshtml       - При активиране/деактивиране
 ├── Booking/                       - Резервации  
-│   ├── BookingConfirmation.cshtml
-│   ├── BookingCancelled.cshtml
-│   └── FlightReminder.cshtml
+│   ├── BookingConfirmation.cshtml        - Потвърждение на резервация с PNR
+│   ├── BookingCancelled.cshtml           - Отмяна с възстановяване
+│   └── FlightReminder.cshtml             - 24ч напомняне (background service)
 └── Flight/                        - Полети
-    └── FlightScheduleChanged.cshtml
+    └── FlightScheduleChanged.cshtml      - Промяна в разписание/статус/гейт
 ```
 
 #### Background Services
 ```
 FlightReminderBackgroundService:
-- Изпълнява се: Всеки час
-- Цел: Намира полети заминаващи в следващите 24-25 часа  
-- Действие: Изпраща автоматични flight reminder имейли
+- Изпълнява се: Всеки час (hosted service)
+- Цел: Намира полети със статус "Scheduled", заминаващи в 24-25 часа  
+- Действие: Изпраща flight reminder имейли на CreatedByUser.Email (не Passenger.Email)
+- Ограничение: Няма флаг за изпратено напомняне (може да се повтори)
 - Логиране: Подробно проследяване на всички операции
+- Placeholder линк: /Booking/Checkin/{pnr} (не съществува в BookingController)
 ```
 
 ### 🗄️ База данни
@@ -546,6 +565,30 @@ dotnet test --collect:"XPlat Code Coverage"
 ------------------------------------------------------------------------
 
 ## 10. Поддръжка и поддръжка
+
+### 🚨 Известни проблеми и ограничения
+
+#### Сигурностни забележки:
+**⚠️ ВАЖНО: FlightController.Delete е GET заявка**
+```bash
+# ПРОБЛЕМ: Delete операцията използва GET вместо POST/DELETE
+# РЕШЕНИЕ: Трябва да се добави [HttpPost] attribute
+# Текущо поведение: /Flight/Delete/{id} може да се извика с GET
+# Риск: CSRF атаки въпреки [Authorize(Roles = "Admin")]
+```
+
+**⚠️ RegisterOperator GET не изисква Authorization**
+```bash
+# ПРОБЛЕМ: GET /Account/RegisterOperator няма [Authorize(Roles = "Admin")]
+# POST операцията е защитена, но формата може да се достъпи анонимно
+# РЕШЕНИЕ: Добавяне на [Authorize(Roles = "Admin")] на GET action
+```
+
+#### Функционални ограничения:
+- **Checkin функционалност**: Email templates сочат към /Booking/Checkin/{pnr} но не съществува
+- **Background reminders**: Няма флаг за изпратено напомняне (може да се повтори в същия 1-часов прозорец)
+- **Payment processing**: Само вътрешно отчитане, няма интеграция с реален PSP
+- **ActiveAccountMiddleware**: Документиран като "mock" - само логира, не блокира неактивни потребители на request ниво
 
 ### 🚨 Известни проблеми и решения
 
@@ -668,6 +711,8 @@ EXEC sp_recompile 'FlightPassengers';
 ---
 
 *Последна актуализация: Април 2026*
-*Версия: 2.0.0 - Professional Enhanced Edition*
+*Версия: 2.1.0 - Accurate Implementation Documentation*
+
+**Забележка**: Този README е обновен да отразява точно реализираните функционалности в кода, а не планираните или предполагаемите възможности. Всички описани функции съответстват на действителната имплементация в проекта.
 
 
