@@ -288,14 +288,30 @@ public class BookingService : IBookingService
 
     private async Task AttachPassengerDropdownAsync(BookSeatViewModel model, Flight? flight, CancellationToken cancellationToken)
     {
-        // Get all registered users regardless of IsActive status or role
-        model.ExistingPassengers = await _db.Users
-            .Select(u => new SelectListItem
-            {
-                Value = u.Id.ToString(),
-                Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
-            })
-            .ToListAsync(cancellationToken);
+        // Only populate for Admin/Operator roles, and only show User role users
+        var userRoleId = await _db.Roles
+            .Where(r => r.Name == "User")
+            .Select(r => r.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+            
+        if (userRoleId != null)
+        {
+            model.ExistingPassengers = await _db.Users
+                .Where(u => _db.UserRoles
+                    .Where(ur => ur.RoleId == userRoleId)
+                    .Select(ur => ur.UserId)
+                    .Contains(u.Id))
+                .Select(u => new SelectListItem
+                {
+                    Value = u.Id.ToString(),
+                    Text = $"{u.FirstName} {u.FamilyName} ({u.Email})"
+                })
+                .ToListAsync(cancellationToken);
+        }
+        else
+        {
+            model.ExistingPassengers = new List<SelectListItem>();
+        }
 
         if (flight != null)
         {
