@@ -96,14 +96,23 @@ public class EmailService : IEmailService
 
     public async Task SendBookingConfirmationAsync(string toEmail, string pnr, Flight flight, Passenger passenger, CancellationToken cancellationToken = default)
     {
+        if (flight == null)
+            throw new ArgumentNullException(nameof(flight), "Flight cannot be null for booking confirmation email");
+        
+        if (passenger == null)
+            throw new ArgumentNullException(nameof(passenger), "Passenger cannot be null for booking confirmation email");
+
+        _logger.LogInformation("Sending booking confirmation email to {Email} for PNR {PNR}. Flight: {FlightNumber}, Passenger: {PassengerName}", 
+            toEmail, pnr, flight.FlightNumber, $"{passenger.FirstName} {passenger.FamilyName}");
+            
         var model = new
         {
-            PNR = pnr,
+            PNR = pnr ?? string.Empty,
             Flight = flight,
             Passenger = passenger,
             PaymentAmount = (decimal?)null,
             PaymentStatus = "Confirmed",
-            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={pnr}"
+            BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={Uri.EscapeDataString(pnr ?? string.Empty)}"
         };
 
         await SendEmailAsync(

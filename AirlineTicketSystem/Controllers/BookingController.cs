@@ -113,6 +113,10 @@ namespace Airline_Ticket_System.Controllers
                         .Include(x => x.Passenger)
                         .Include(x => x.Flight)
                         .FirstOrDefaultAsync(x => x.Pnr == outcome.Pnr);
+                        
+                    _logger.LogInformation("Loaded FlightPassenger for PNR {PNR}: fp={FpExists}, passenger={PassengerExists}, flight={FlightExists}", 
+                        outcome.Pnr, fp != null, fp?.Passenger != null, fp?.Flight != null);
+                        
                     if (fp?.Passenger != null && fp.Flight != null)
                     {
                         // Send email to passenger if they have an email address
