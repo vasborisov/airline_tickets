@@ -196,7 +196,6 @@ public class EmailService : IEmailService
                 // Still render the template for testing
                 var htmlContent = await RenderEmailTemplateAsync($"{folder}/{templateName}", model);
                 _logger.LogDebug("Email HTML Content Length: {Length} characters", htmlContent?.Length ?? 0);
-                return;
             }
 
             // Render email template
@@ -233,7 +232,11 @@ public class EmailService : IEmailService
             var viewEngine = scope.ServiceProvider.GetRequiredService<ICompositeViewEngine>();
             var tempDataProvider = scope.ServiceProvider.GetRequiredService<ITempDataProvider>();
             
-            var viewResult = viewEngine.FindView(actionContext, $"~/Views/EmailTemplates/{templateName}.cshtml", false);
+            // Fix Windows path separators - replace backslashes with forward slashes
+            var templatePath = $"~/Views/EmailTemplates/{templateName.Replace('\\', '/')}.cshtml";
+            
+            var viewResult = viewEngine.GetView(null, templatePath, false);
+
             if (!viewResult.Success)
             {
                 _logger.LogError("Email template not found: {Template}", templateName);
@@ -338,7 +341,7 @@ public class EmailService : IEmailService
     {
         // In a real application, this should come from configuration
         return _environment.IsDevelopment() 
-            ? "https://localhost:5001" 
+            ? "http://localhost:5090" 
             : "https://your-production-domain.com";
     }
 }
