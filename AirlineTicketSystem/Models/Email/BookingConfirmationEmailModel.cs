@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Airline_Ticket_System.Entities;
 
 namespace Airline_Ticket_System.Models.Email
 {
@@ -8,9 +7,9 @@ namespace Airline_Ticket_System.Models.Email
         [Required]
         public string PNR { get; set; } = string.Empty;
         
-        public Flight? Flight { get; set; }
+        public Airline_Ticket_System.Entities.Flight? Flight { get; set; }
         
-        public Passenger? Passenger { get; set; }
+        public Airline_Ticket_System.Entities.Passenger? Passenger { get; set; }
         
         public decimal? PaymentAmount { get; set; }
         
