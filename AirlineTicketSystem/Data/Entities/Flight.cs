@@ -14,10 +14,10 @@ namespace Airline_Ticket_System.Entities
         public byte[]? RowVersion { get; set; }
 
         [Required]
-        public string DepartureCity { get; set; }
+        public string DepartureCity { get; set; } = string.Empty;
 
         [Required]
-        public string ArrivalCity { get; set; }
+        public string ArrivalCity { get; set; } = string.Empty;
 
         [Required]
         [Range(30, int.MaxValue, ErrorMessage = "Duration must be at least 30 minutes.")]
