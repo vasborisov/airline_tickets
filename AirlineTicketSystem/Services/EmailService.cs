@@ -1,5 +1,6 @@
 using Airline_Ticket_System.Configurations;
 using Airline_Ticket_System.Entities;
+using Airline_Ticket_System.Models.Email;
 using Airline_Ticket_System.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -105,12 +106,12 @@ public class EmailService : IEmailService
         _logger.LogInformation("Sending booking confirmation email to {Email} for PNR {PNR}. Flight: {FlightNumber}, Passenger: {PassengerName}", 
             toEmail, pnr, flight.FlightNumber, $"{passenger.FirstName} {passenger.FamilyName}");
             
-        var model = new
+        var model = new BookingConfirmationEmailModel
         {
             PNR = pnr ?? string.Empty,
             Flight = flight,
             Passenger = passenger,
-            PaymentAmount = (decimal?)null,
+            PaymentAmount = null,
             PaymentStatus = "Confirmed",
             BookingDetailsUrl = GetBaseUrl() + $"/Booking/ByPnr?pnr={Uri.EscapeDataString(pnr ?? string.Empty)}"
         };
@@ -233,6 +234,8 @@ public class EmailService : IEmailService
     {
         try
         {
+            _logger.LogDebug("Rendering email template: {Template} with model type: {ModelType}", templateName, model?.GetType().Name);
+            
             using var scope = _serviceProvider.CreateScope();
             var httpContext = new DefaultHttpContext { RequestServices = scope.ServiceProvider };
             var actionContext = new ActionContext(httpContext, new Microsoft.AspNetCore.Routing.RouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
@@ -243,15 +246,20 @@ public class EmailService : IEmailService
             // Fix Windows path separators - replace backslashes with forward slashes
             var templatePath = $"~/Views/EmailTemplates/{templateName.Replace('\\', '/')}.cshtml";
             
+            _logger.LogDebug("Looking for template at path: {TemplatePath}", templatePath);
+            
             var viewResult = viewEngine.GetView(null, templatePath, false);
 
             if (!viewResult.Success)
             {
-                _logger.LogError("Email template not found: {Template}", templateName);
+                _logger.LogError("Email template not found: {Template} at path {TemplatePath}. Searched locations: {SearchedLocations}", 
+                    templateName, templatePath, string.Join(", ", viewResult.SearchedLocations ?? Array.Empty<string>()));
                 return null;
             }
 
             using var stringWriter = new StringWriter();
+            
+            // Create ViewDataDictionary with object type for better compatibility
             var viewDictionary = new ViewDataDictionary<object>(new EmptyModelMetadataProvider(), new ModelStateDictionary())
             {
                 Model = model
@@ -260,12 +268,17 @@ public class EmailService : IEmailService
             var tempData = new TempDataDictionary(httpContext, tempDataProvider);
             var viewContext = new ViewContext(actionContext, viewResult.View, viewDictionary, tempData, stringWriter, new HtmlHelperOptions());
 
+            _logger.LogDebug("Rendering view for template: {Template}", templateName);
             await viewResult.View.RenderAsync(viewContext);
-            return stringWriter.ToString();
+            
+            var result = stringWriter.ToString();
+            _logger.LogDebug("Successfully rendered template: {Template}. Content length: {Length}", templateName, result.Length);
+            
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error rendering email template {Template}", templateName);
+            _logger.LogError(ex, "Error rendering email template {Template}. Model: {@Model}", templateName, model);
             return null;
         }
     }
