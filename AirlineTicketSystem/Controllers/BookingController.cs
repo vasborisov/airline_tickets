@@ -102,7 +102,7 @@ namespace Airline_Ticket_System.Controllers
 
             if (outcome.Success)
             {
-                if (!string.IsNullOrEmpty(outcome.Pnr) && !string.IsNullOrEmpty(currentUser?.Email))
+                if (!string.IsNullOrEmpty(outcome.Pnr))
                 {
                     var fp = await _context.FlightPassengers
                         .AsNoTracking()
@@ -111,8 +111,24 @@ namespace Airline_Ticket_System.Controllers
                         .FirstOrDefaultAsync(x => x.Pnr == outcome.Pnr);
                     if (fp?.Passenger != null && fp.Flight != null)
                     {
-                        await _emailService.SendBookingConfirmationAsync(
-                            currentUser.Email, outcome.Pnr, fp.Flight, fp.Passenger);
+                        // Send email to passenger if they have an email address
+                        string? emailToSend = null;
+                        
+                        if (!string.IsNullOrEmpty(fp.Passenger.Email))
+                        {
+                            emailToSend = fp.Passenger.Email;
+                        }
+                        else if (!string.IsNullOrEmpty(currentUser?.Email))
+                        {
+                            // Fallback to booking user's email if passenger email not available
+                            emailToSend = currentUser.Email;
+                        }
+                        
+                        if (!string.IsNullOrEmpty(emailToSend))
+                        {
+                            await _emailService.SendBookingConfirmationAsync(
+                                emailToSend, outcome.Pnr, fp.Flight, fp.Passenger);
+                        }
                     }
                 }
 

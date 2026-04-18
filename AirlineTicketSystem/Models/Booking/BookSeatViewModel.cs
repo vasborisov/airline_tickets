@@ -20,6 +20,11 @@ namespace Airline_Ticket_System.Models.Booking
         [Display(Name = "Family Name")]
         public string FamilyName { get; set; }
 
+        [ValidateNever]
+        [Display(Name = "Email Address")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address")]
+        public string? Email { get; set; }
+
         public string? SelectedPassengerId { get; set; }
         public List<SelectListItem>? ExistingPassengers { get; set; }
         public bool CreateNewPassenger { get; set; }

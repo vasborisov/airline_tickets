@@ -49,6 +49,12 @@ public class BookingService : IBookingService
                 return BookingCommitResult.Fail("Please provide both First and Family names for a new passenger.", model);
             }
 
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                await AttachPassengerDropdownAsync(model, flight, cancellationToken);
+                return BookingCommitResult.Fail("Please provide an email address for booking notifications.", model);
+            }
+
             var existingPassenger = await _db.Passengers
                 .FirstOrDefaultAsync(p =>
                     p.FirstName.ToLower() == model.FirstName.Trim().ToLower() &&
@@ -56,11 +62,17 @@ public class BookingService : IBookingService
 
             if (existingPassenger != null)
             {
+                // Update email if it's different or empty
+                if (string.IsNullOrEmpty(existingPassenger.Email) || existingPassenger.Email != model.Email)
+                {
+                    existingPassenger.Email = model.Email.Trim();
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
                 passenger = existingPassenger;
             }
             else
             {
-                passenger = new Passenger(model.FirstName.Trim(), model.FamilyName.Trim());
+                passenger = new Passenger(model.FirstName.Trim(), model.FamilyName.Trim(), model.Email.Trim());
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -83,7 +95,7 @@ public class BookingService : IBookingService
 
             if (existingPassenger == null)
             {
-                passenger = new Passenger(selectedUser.FirstName, selectedUser.FamilyName);
+                passenger = new Passenger(selectedUser.FirstName, selectedUser.FamilyName, selectedUser.Email);
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
@@ -107,12 +119,18 @@ public class BookingService : IBookingService
 
             if (existingPassenger == null)
             {
-                passenger = new Passenger(currentUser.FirstName, currentUser.FamilyName);
+                passenger = new Passenger(currentUser.FirstName, currentUser.FamilyName, currentUser.Email);
                 _db.Passengers.Add(passenger);
                 await _db.SaveChangesAsync(cancellationToken);
             }
             else
             {
+                // Update email if it's different or empty for self-booking
+                if (string.IsNullOrEmpty(existingPassenger.Email) || existingPassenger.Email != currentUser.Email)
+                {
+                    existingPassenger.Email = currentUser.Email;
+                    await _db.SaveChangesAsync(cancellationToken);
+                }
                 passenger = existingPassenger;
             }
 
